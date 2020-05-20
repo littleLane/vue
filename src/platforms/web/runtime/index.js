@@ -34,11 +34,17 @@ extend(Vue.options.components, platformComponents)
 Vue.prototype.__patch__ = inBrowser ? patch : noop
 
 // public mount method
+// 会被 runtime only 版本的 Vue 直接使用
+// 参数 el => 挂载节点
+// hydrating => 是否为服务端渲染
 Vue.prototype.$mount = function (
   el?: string | Element,
   hydrating?: boolean
 ): Component {
   el = el && inBrowser ? query(el) : undefined
+
+  // 挂载组件
+  // reference: core/instance/lifecycle
   return mountComponent(this, el, hydrating)
 }
 

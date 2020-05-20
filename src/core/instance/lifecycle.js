@@ -56,6 +56,9 @@ export function initLifecycle (vm: Component) {
 }
 
 export function lifecycleMixin (Vue: Class<Component>) {
+  // 更新渲染节点
+  // vnode => 新的虚拟 DOM
+  // hydrating => 是否为服务端渲染
   Vue.prototype._update = function (vnode: VNode, hydrating?: boolean) {
     const vm: Component = this
     const prevEl = vm.$el
@@ -64,11 +67,13 @@ export function lifecycleMixin (Vue: Class<Component>) {
     vm._vnode = vnode
     // Vue.prototype.__patch__ is injected in entry points
     // based on the rendering backend used.
+    // prevVnode 不存在表示首次渲染
     if (!prevVnode) {
       // initial render
       vm.$el = vm.__patch__(vm.$el, vnode, hydrating, false /* removeOnly */)
     } else {
       // updates
+      // 更新渲染
       vm.$el = vm.__patch__(prevVnode, vnode)
     }
     restoreActiveInstance()
@@ -80,6 +85,8 @@ export function lifecycleMixin (Vue: Class<Component>) {
       vm.$el.__vue__ = vm
     }
     // if parent is an HOC, update its $el as well
+    // vm.$vnode 为当前实例的父 VNode
+    // vm.$parent._vnode 当前 VNode 的父 VNode
     if (vm.$vnode && vm.$parent && vm.$vnode === vm.$parent._vnode) {
       vm.$parent.$el = vm.$el
     }
@@ -138,6 +145,12 @@ export function lifecycleMixin (Vue: Class<Component>) {
   }
 }
 
+/**
+ * 挂载组件
+ * @param {*} vm Vue 实例
+ * @param {*} el 挂载节点
+ * @param {*} hydrating 服务端渲染
+ */
 export function mountComponent (
   vm: Component,
   el: ?Element,
@@ -145,7 +158,11 @@ export function mountComponent (
 ): Component {
   vm.$el = el
   if (!vm.$options.render) {
+    // vm.$options.render 不存在就创建一个空的 vnode
     vm.$options.render = createEmptyVNode
+
+    // runtime-only 版本没有 compiler，只支持 render function
+    // 对 tmeplate 或 el 形式不支持
     if (process.env.NODE_ENV !== 'production') {
       /* istanbul ignore if */
       if ((vm.$options.template && vm.$options.template.charAt(0) !== '#') ||
@@ -164,8 +181,14 @@ export function mountComponent (
       }
     }
   }
+
+  // 调用 beforeMount 生命周期
   callHook(vm, 'beforeMount')
 
+  // 构造 updateComponent 更新渲染函数
+  // production 和 非 production 都是一样的，非 production 有个性能的测算逻辑
+  //  => vm._render() 用来生成虚拟 Node reference: src/core/instance/render.js
+  //  => vm._update 更新 DOM reference: lifecycleMixin for up
   let updateComponent
   /* istanbul ignore if */
   if (process.env.NODE_ENV !== 'production' && config.performance && mark) {
@@ -194,6 +217,9 @@ export function mountComponent (
   // we set this to vm._watcher inside the watcher's constructor
   // since the watcher's initial patch may call $forceUpdate (e.g. inside child
   // component's mounted hook), which relies on vm._watcher being already defined
+  // 1、初始化是会调用回调 => 初始挂载渲染
+  // 2、当 vm 实例中的监测的数据发生变化时会执行回调函数 => 更新挂载渲染
+  // 而且被表示为 render watcher
   new Watcher(vm, updateComponent, noop, {
     before () {
       if (vm._isMounted && !vm._isDestroyed) {
@@ -205,6 +231,9 @@ export function mountComponent (
 
   // manually mounted instance, call mounted on self
   // mounted is called for render-created child components in its inserted hook
+  // vm.$vnode (父 VNode) 为 null 标识此节点为根节点
+  // 将 _isMounted 设置为 true 标识实例已经挂载
+  // 执行 mounted 生命周期钩子函数
   if (vm.$vnode == null) {
     vm._isMounted = true
     callHook(vm, 'mounted')
