@@ -5,6 +5,11 @@ import { eventsMixin } from './events'
 import { lifecycleMixin } from './lifecycle'
 import { warn } from '../util/index'
 
+/**
+ * 为什么是构造函数，而不是 class？
+ * 构造函数更方便通过 prototype 进行扩展，而 class 分块扩展能力较差，几乎不能实现
+ * @param {*} options
+ */
 function Vue (options) {
   if (process.env.NODE_ENV !== 'production' &&
     !(this instanceof Vue)
