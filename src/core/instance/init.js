@@ -12,10 +12,16 @@ import { extend, mergeOptions, formatComponentName } from '../util/index'
 
 let uid = 0
 
+/**
+ * 初始化 Vue.prototype._init
+ * @param {*} Vue
+ */
 export function initMixin (Vue: Class<Component>) {
   Vue.prototype._init = function (options?: Object) {
+    // 组件实例
     const vm: Component = this
     // a uid
+    // 递增 _uid，用于标识唯一的组件实例
     vm._uid = uid++
 
     let startTag, endTag
@@ -27,6 +33,7 @@ export function initMixin (Vue: Class<Component>) {
     }
 
     // a flag to avoid this being observed
+    // 避免后面做数据响应式的时候将 vm 实例也响应化
     vm._isVue = true
     // merge options
     if (options && options._isComponent) {
@@ -42,6 +49,7 @@ export function initMixin (Vue: Class<Component>) {
       )
     }
     /* istanbul ignore else */
+    // vm._renderProxy 赋值，vm 实例或 vm 代理对象
     if (process.env.NODE_ENV !== 'production') {
       initProxy(vm)
     } else {
@@ -49,13 +57,30 @@ export function initMixin (Vue: Class<Component>) {
     }
     // expose real self
     vm._self = vm
+
+    // 初始化生命周期相关的属性
     initLifecycle(vm)
+
+    // 初始化事件
     initEvents(vm)
+
+    // 初始化渲染
     initRender(vm)
+
+    // 调用 beforeCreate 生命周期
     callHook(vm, 'beforeCreate')
+
+    // 初始化 inject
+    // 注意在初始化 data/props 之前
     initInjections(vm) // resolve injections before data/props
+
+    // 初始化 data/props
     initState(vm)
+
+    // 初始化 provide，在 data/props 之后
     initProvide(vm) // resolve provide after data/props
+
+    // 调用 created 生命周期
     callHook(vm, 'created')
 
     /* istanbul ignore if */
@@ -65,6 +90,8 @@ export function initMixin (Vue: Class<Component>) {
       measure(`vue ${vm._name} init`, startTag, endTag)
     }
 
+    // vm.$mount 挂载节点
+    // reference: src/platforms/web/entry-runtime-with-compiler.js
     if (vm.$options.el) {
       vm.$mount(vm.$options.el)
     }
