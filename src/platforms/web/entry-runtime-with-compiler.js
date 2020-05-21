@@ -44,6 +44,7 @@ Vue.prototype.$mount = function (
     let template = options.template
     if (template) {
       if (typeof template === 'string') {
+        // <script type="text/x-template" id="item-template">
         // 如果 template 以 # 开头，那就是一个选择器
         // 获取选择器节点的 innerHTML
         if (template.charAt(0) === '#') {

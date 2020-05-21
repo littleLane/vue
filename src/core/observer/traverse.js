@@ -16,6 +16,12 @@ export function traverse (val: any) {
   seenObjects.clear()
 }
 
+/**
+ * 目的就是触发对象的 getter 方法进行依赖的收集
+ * 通过 seenObjects 避免重复的依赖收集
+ * @param {*} val
+ * @param {*} seen
+ */
 function _traverse (val: any, seen: SimpleSet) {
   let i, keys
   const isA = Array.isArray(val)
