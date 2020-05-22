@@ -31,6 +31,9 @@ extend(Vue.options.directives, platformDirectives)
 extend(Vue.options.components, platformComponents)
 
 // install platform patch function
+// 在浏览器环境返回 patch
+// 在服务端渲染环境返回 noop，因为服务端渲染不需要将 VNode 转换成 DOM
+// patch reference: src/platforms/web/runtime/patch.js
 Vue.prototype.__patch__ = inBrowser ? patch : noop
 
 // public mount method
