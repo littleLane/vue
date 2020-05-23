@@ -161,7 +161,7 @@ export function _createElement (
     }
   } else {
     // direct component options / constructor
-    // 直接创建一个组件 VNode
+    // 直接创建组件的 VNode
     vnode = createComponent(tag, data, context, children)
   }
 

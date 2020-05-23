@@ -150,7 +150,7 @@ export function lifecycleMixin (Vue: Class<Component>) {
 /**
  * 挂载组件
  * @param {*} vm Vue 实例
- * @param {*} el 挂载节点
+ * @param {*} el 挂载 dom 节点
  * @param {*} hydrating 服务端渲染
  */
 export function mountComponent (

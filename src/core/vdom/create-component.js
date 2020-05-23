@@ -98,6 +98,14 @@ const componentVNodeHooks = {
 
 const hooksToMerge = Object.keys(componentVNodeHooks)
 
+/**
+ * 创建组件的 VNode
+ * @param {*} Ctor
+ * @param {*} data
+ * @param {*} context
+ * @param {*} children
+ * @param {*} tag
+ */
 export function createComponent (
   Ctor: Class<Component> | Function | Object | void,
   data: ?VNodeData,
@@ -109,10 +117,12 @@ export function createComponent (
     return
   }
 
+  // 构造子类构造函数
   const baseCtor = context.$options._base
 
   // plain options object: turn it into a constructor
   if (isObject(Ctor)) {
+    // reference: src/core/global-api/extend.js
     Ctor = baseCtor.extend(Ctor)
   }
 
@@ -183,9 +193,12 @@ export function createComponent (
   }
 
   // install component management hooks onto the placeholder node
+  // 安装组件钩子函数
   installComponentHooks(data)
 
   // return a placeholder vnode
+  // 实例化 VNode，并返回占位 vnode
+  // 组件的 vnode 没有 children
   const name = Ctor.options.name || tag
   const vnode = new VNode(
     `vue-component-${Ctor.cid}${name ? `-${name}` : ''}`,
@@ -223,6 +236,12 @@ export function createComponentInstanceForVnode (
   return new vnode.componentOptions.Ctor(options)
 }
 
+/**
+ * 安装组件钩子函数
+ * 把 componentVNodeHooks 的钩子函数合并到 data.hook 中
+ * 在合并过程中，如果某个时机的钩子已经存在 data.hook 中，那么通过执行 mergeHook 函数做合并
+ * @param {*} data
+ */
 function installComponentHooks (data: VNodeData) {
   const hooks = data.hook || (data.hook = {})
   for (let i = 0; i < hooksToMerge.length; i++) {
