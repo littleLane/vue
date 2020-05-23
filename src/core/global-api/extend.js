@@ -42,7 +42,7 @@ export function initExtend (Vue: GlobalAPI) {
     Sub.prototype.constructor = Sub
     Sub.cid = cid++
 
-    // 扩展子类
+    // 把 Vue.options 和传入的 extendOptions 合并到 Sub.options
     Sub.options = mergeOptions(
       Super.options,
       extendOptions

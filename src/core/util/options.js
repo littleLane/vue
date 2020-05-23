@@ -521,31 +521,41 @@ export function mergeOptions (
  * Resolve an asset.
  * This function is used because child instances need access
  * to assets defined in its ancestor chain.
+ *获取组价的构造函数
  */
 export function resolveAsset (
   options: Object,
   type: string,
-  id: string,
+  id: string,     // 连字符、驼峰或首字母大写的形式
   warnMissing?: boolean
 ): any {
   /* istanbul ignore if */
   if (typeof id !== 'string') {
     return
   }
-  const assets = options[type]
+  const assets = options[type]    // vm.options.components
   // check local registration variations first
+  // 通过 id 也就是 tag 获取
   if (hasOwn(assets, id)) return assets[id]
+
+  // 将 id 也就是 tag 转驼峰获取
   const camelizedId = camelize(id)
   if (hasOwn(assets, camelizedId)) return assets[camelizedId]
+
+  // 将 id 也就是 tag 转驼峰，再将驼峰首字母大写获取
   const PascalCaseId = capitalize(camelizedId)
   if (hasOwn(assets, PascalCaseId)) return assets[PascalCaseId]
+
+  // 最后到原型链上获取
   // fallback to prototype chain
   const res = assets[id] || assets[camelizedId] || assets[PascalCaseId]
+
   if (process.env.NODE_ENV !== 'production' && warnMissing && !res) {
     warn(
       'Failed to resolve ' + type.slice(0, -1) + ': ' + id,
       options
     )
   }
+
   return res
 }
