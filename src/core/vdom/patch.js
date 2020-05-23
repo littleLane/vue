@@ -243,10 +243,18 @@ export function createPatchFunction (backend) {
     }
   }
 
+  /**
+   * 尝试创建组件
+   * @param {*} vnode
+   * @param {*} insertedVnodeQueue
+   * @param {*} parentElm
+   * @param {*} refElm
+   */
   function createComponent (vnode, insertedVnodeQueue, parentElm, refElm) {
     let i = vnode.data
     if (isDef(i)) {
       const isReactivated = isDef(vnode.componentInstance) && i.keepAlive
+      // init reference: src/core/vdom/create-component.js   componentVNodeHooks.init
       if (isDef(i = i.hook) && isDef(i = i.init)) {
         i(vnode, false /* hydrating */)
       }
@@ -256,6 +264,7 @@ export function createPatchFunction (backend) {
       // in that case we can just return the element and be done.
       if (isDef(vnode.componentInstance)) {
         initComponent(vnode, insertedVnodeQueue)
+        // 完成组件 DOM 的插入，顺序 => 先子后父
         insert(parentElm, vnode.elm, refElm)
         if (isTrue(isReactivated)) {
           reactivateComponent(vnode, insertedVnodeQueue, parentElm, refElm)

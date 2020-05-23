@@ -18,9 +18,18 @@ import {
   invokeWithErrorHandling
 } from '../util/index'
 
+// 保持当前上下文的 vue/组件 实例
 export let activeInstance: any = null
 export let isUpdatingChildComponent: boolean = false
 
+/**
+ * 设置当前激活的组件实例
+ * prevActiveInstance 和 vm 是父子关系
+ *    当一个 vm 实例完成它的所有子树的 patch 或者 update 过程后，activeInstance 会回到它的父实例，
+ *    这样就完美地保证了 createComponentInstanceForVnode 整个深度遍历过程中
+ *    整个过程类似于 => 洋葱模型
+ * @param {*} vm
+ */
 export function setActiveInstance(vm: Component) {
   const prevActiveInstance = activeInstance
   activeInstance = vm
@@ -38,6 +47,8 @@ export function initLifecycle (vm: Component) {
     while (parent.$options.abstract && parent.$parent) {
       parent = parent.$parent
     }
+
+    // 把当前的 vm 存储到父实例的 $children 中
     parent.$children.push(vm)
   }
 
@@ -57,13 +68,16 @@ export function initLifecycle (vm: Component) {
 
 export function lifecycleMixin (Vue: Class<Component>) {
   // 更新渲染节点
-  // vnode => 新的虚拟 DOM
+  // vnode => 新的虚拟 DOM，通过 vm._render() 生成
   // hydrating => 是否为服务端渲染
   Vue.prototype._update = function (vnode: VNode, hydrating?: boolean) {
     const vm: Component = this
     const prevEl = vm.$el
     const prevVnode = vm._vnode
     const restoreActiveInstance = setActiveInstance(vm)
+
+    // vm._vnode 和 vm.$vnode 的就是父子关系
+    // vm._vnode.parent === vm.$vnode
     vm._vnode = vnode
     // Vue.prototype.__patch__ is injected in entry points
     // based on the rendering backend used.
@@ -190,7 +204,7 @@ export function mountComponent (
   // 构造 updateComponent 更新渲染函数
   // production 和 非 production 都是一样的，非 production 有个性能的测算逻辑
   //  => vm._render() 用来生成虚拟 Node reference: src/core/instance/render.js
-  //  => vm._update 更新 DOM reference: lifecycleMixin for up
+  //  => vm._update 渲染/更新 DOM reference: lifecycleMixin for up
   let updateComponent
   /* istanbul ignore if */
   if (process.env.NODE_ENV !== 'production' && config.performance && mark) {

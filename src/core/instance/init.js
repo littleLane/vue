@@ -98,6 +98,11 @@ export function initMixin (Vue: Class<Component>) {
   }
 }
 
+/**
+ * 将 new Vue 时传入的 options 和 Vue 实例上的一些属性合并到当前组件实例的 $options 上。
+ * @param {*} vm 当前的组件实例
+ * @param {*} options new Vue() 传入的的参数
+ */
 export function initInternalComponent (vm: Component, options: InternalComponentOptions) {
   const opts = vm.$options = Object.create(vm.constructor.options)
   // doing this because it's faster than dynamic enumeration.

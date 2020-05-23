@@ -46,7 +46,7 @@ const componentVNodeHooks = {
     } else {
       const child = vnode.componentInstance = createComponentInstanceForVnode(
         vnode,
-        activeInstance
+        activeInstance    // 当前激活状态下的 Vue/组件 实例
       )
       child.$mount(hydrating ? vnode.elm : undefined, hydrating)
     }
@@ -222,10 +222,11 @@ export function createComponentInstanceForVnode (
   vnode: any, // we know it's MountedComponentVNode but flow doesn't
   parent: any, // activeInstance in lifecycle state
 ): Component {
+  // 构造内部组件的参数
   const options: InternalComponentOptions = {
-    _isComponent: true,
-    _parentVnode: vnode,
-    parent
+    _isComponent: true,   // 标识是一个组件
+    _parentVnode: vnode,  // 父级 vnode
+    parent                // 当前激活的组件实例
   }
   // check inline-template render functions
   const inlineTemplate = vnode.data.inlineTemplate
@@ -233,6 +234,12 @@ export function createComponentInstanceForVnode (
     options.render = inlineTemplate.render
     options.staticRenderFns = inlineTemplate.staticRenderFns
   }
+
+  // 实例化子组件
+  // vnode.componentOptions.Ctor => 子组件的构造函数
+  // 继承于 Vue 而构造的 Sub 构造器，相当于 new Sub(options)
+  // reference: up => export function createComponent (
+  // after run: => this._init(options)  reference: src/core/instance/init.js
   return new vnode.componentOptions.Ctor(options)
 }
 
