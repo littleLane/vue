@@ -25,6 +25,8 @@ import {
  * Option overwriting strategies are functions that handle
  * how to merge a parent option value and a child option
  * value into the final value.
+ * 初始值就是空对象 Object.create(null)
+ * 用来保存不同 option 的合并策略
  */
 const strats = config.optionMergeStrategies
 
@@ -74,7 +76,7 @@ function mergeData (to: Object, from: ?Object): Object {
 }
 
 /**
- * Data
+ * Data option 合并策略
  */
 export function mergeDataOrFn (
   parentVal: any,
@@ -118,11 +120,14 @@ export function mergeDataOrFn (
   }
 }
 
+// data option 合并策略
 strats.data = function (
   parentVal: any,
   childVal: any,
   vm?: Component
 ): ?Function {
+  // vm 不存在代表不是 new Vue(options) 调用，也就是组件 data 或者 Vue.extend
+  // 这时需要使用 function 的形式防止因组件复用导致的 data 污染问题
   if (!vm) {
     if (childVal && typeof childVal !== 'function') {
       process.env.NODE_ENV !== 'production' && warn(
@@ -142,6 +147,7 @@ strats.data = function (
 
 /**
  * Hooks and props are merged as arrays.
+ * 以数组的方式合并生命周期钩子函数
  */
 function mergeHook (
   parentVal: ?Array<Function>,
@@ -169,6 +175,7 @@ function dedupeHooks (hooks) {
   return res
 }
 
+// 合并生命周期钩子函数
 LIFECYCLE_HOOKS.forEach(hook => {
   strats[hook] = mergeHook
 })
@@ -204,6 +211,7 @@ ASSET_TYPES.forEach(function (type) {
  *
  * Watchers hashes should not overwrite one
  * another, so we merge them as arrays.
+ * 合并 watch
  */
 strats.watch = function (
   parentVal: ?Object,
@@ -294,12 +302,26 @@ export function validateComponentName (name: string) {
 /**
  * Ensure all props option syntax are normalized into the
  * Object-based format.
+ * 格式化 props
+ * @param {*} options
+ * @param {*} vm
  */
 function normalizeProps (options: Object, vm: ?Component) {
   const props = options.props
   if (!props) return
   const res = {}
   let i, val, name
+
+  // props like ['title', 'c']
+  // 转换成 =>
+  // {
+  //   title: {
+  //     type: null
+  //   },
+  //   likes: {
+  //     type: null
+  //   }
+  // }
   if (Array.isArray(props)) {
     i = props.length
     while (i--) {
@@ -312,6 +334,22 @@ function normalizeProps (options: Object, vm: ?Component) {
       }
     }
   } else if (isPlainObject(props)) {
+    // props like =>
+    //     props: {
+    //       title: {
+    //         type: String
+    //       },
+    //       likes: Number,
+    //     }
+    // 转换成 =>
+    //     props: {
+    //       title: {
+    //         type: String
+    //       },
+    //       likes: {
+    //         type: Number
+    //       },
+    //     }
     for (const key in props) {
       val = props[key]
       name = camelize(key)
@@ -331,16 +369,36 @@ function normalizeProps (options: Object, vm: ?Component) {
 
 /**
  * Normalize all injections into Object-based format
+ * 格式化 inject
+ * @param {*} options
+ * @param {*} vm
  */
 function normalizeInject (options: Object, vm: ?Component) {
   const inject = options.inject
   if (!inject) return
   const normalized = options.inject = {}
+
+  // inject 是数组 like => inject: ['foo'],
+  // 转换成 =>
+  //   [
+  //     foo: {
+  //       from: 'foo'
+  //     }
+  //   ]
   if (Array.isArray(inject)) {
     for (let i = 0; i < inject.length; i++) {
       normalized[inject[i]] = { from: inject[i] }
     }
   } else if (isPlainObject(inject)) {
+    // inject like =>
+    //   inject: {
+    //     foo: {
+    //       from: 'bar',
+    //       default: 'foo'
+    //     }
+    //   }
+    // or like =>
+    //   inject: { foo },
     for (const key in inject) {
       const val = inject[key]
       normalized[key] = isPlainObject(val)
@@ -358,6 +416,8 @@ function normalizeInject (options: Object, vm: ?Component) {
 
 /**
  * Normalize raw function directives into object format.
+ * 如果指令本身就是 { key: Function } 的形式 =>
+ *    就格式化为 { key: { bind: Function, update: Function } }
  */
 function normalizeDirectives (options: Object) {
   const dirs = options.directives
@@ -381,10 +441,14 @@ function assertObjectType (name: string, value: any, vm: ?Component) {
   }
 }
 
-/**
- * Merge two option objects into a new one.
- * Core utility used in both instantiation and inheritance.
- */
+ /**
+  * Merge two option objects into a new one.
+  * Core utility used in both instantiation and inheritance.
+  * 合并配置项
+  * @param {*} parent 相当于 Vue.options
+  * @param {*} child 实例化 Vue 或者子组件时传入的配置项
+  * @param {*} vm Vue 或者子组件实例
+  */
 export function mergeOptions (
   parent: Object,
   child: Object,
@@ -398,18 +462,28 @@ export function mergeOptions (
     child = child.options
   }
 
+  // 格式化 props
   normalizeProps(child, vm)
+
+  // 格式化 inject
   normalizeInject(child, vm)
+
+  // 格式化 directives
   normalizeDirectives(child)
 
   // Apply extends and mixins on the child options,
   // but only if it is a raw options object that isn't
   // the result of another mergeOptions call.
   // Only merged options has the _base property.
+  // child._base 只会在 initGlobalAPI（src/core/global-api/index.js）被赋值为 Vue 本身（Vue._base = Vue）
+  // child._base 不存在就代表不是 Vue 本身
   if (!child._base) {
+    // 递归合并 extends
     if (child.extends) {
       parent = mergeOptions(parent, child.extends, vm)
     }
+
+    // 递归遍历合并 mixins
     if (child.mixins) {
       for (let i = 0, l = child.mixins.length; i < l; i++) {
         parent = mergeOptions(parent, child.mixins[i], vm)
@@ -419,14 +493,23 @@ export function mergeOptions (
 
   const options = {}
   let key
+
+  // 遍历 parent 调用 mergeField
   for (key in parent) {
     mergeField(key)
   }
+
+  // 遍历 child，如果 key 不在 parent 的自身属性上，则调用 mergeField
   for (key in child) {
     if (!hasOwn(parent, key)) {
       mergeField(key)
     }
   }
+
+  /**
+   * 针对不同 option 执行不同的合并策略
+   * @param {*} key
+   */
   function mergeField (key) {
     const strat = strats[key] || defaultStrat
     options[key] = strat(parent[key], child[key], vm, key)

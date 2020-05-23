@@ -17,6 +17,9 @@ let uid = 0
  * @param {*} Vue
  */
 export function initMixin (Vue: Class<Component>) {
+  // 调用的两种场景 =>
+  //    1、new Vue(options)
+  //    2、实例化子组件
   Vue.prototype._init = function (options?: Object) {
     // 组件实例
     const vm: Component = this
@@ -36,12 +39,15 @@ export function initMixin (Vue: Class<Component>) {
     // 避免后面做数据响应式的时候将 vm 实例也响应化
     vm._isVue = true
     // merge options
+    // 实例化组件时调用
     if (options && options._isComponent) {
       // optimize internal component instantiation
       // since dynamic options merging is pretty slow, and none of the
       // internal component options needs special treatment.
       initInternalComponent(vm, options)
     } else {
+      // 外部通过 new Vue(options) 调用
+      // 合并配置项
       vm.$options = mergeOptions(
         resolveConstructorOptions(vm.constructor),
         options || {},
