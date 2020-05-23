@@ -136,14 +136,19 @@ export function createComponent (
   }
 
   // async component
+  // 异步组件处理逻辑
   let asyncFactory
   if (isUndef(Ctor.cid)) {
     asyncFactory = Ctor
+
+    // reference: src/core/vdom/helpers/resolve-async-component.js
+    // 除非使用高级异步组件 0 delay 去创建了一个 loading 组件，否则返回是 undefiend
     Ctor = resolveAsyncComponent(asyncFactory, baseCtor)
     if (Ctor === undefined) {
       // return a placeholder node for async component, which is rendered
       // as a comment node but preserves all the raw information for the node.
       // the information will be used for async server-rendering and hydration.
+      // 创建了一个占位的注释 VNode
       return createAsyncPlaceholder(
         asyncFactory,
         data,
