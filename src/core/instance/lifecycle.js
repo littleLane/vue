@@ -117,19 +117,30 @@ export function lifecycleMixin (Vue: Class<Component>) {
     }
   }
 
+  // 组件销毁的方法
   Vue.prototype.$destroy = function () {
     const vm: Component = this
+
+    // 如果已经开始销毁程序就直接 return
     if (vm._isBeingDestroyed) {
       return
     }
+
+    // beforeDestroy
     callHook(vm, 'beforeDestroy')
+
+    // 设置销毁过程中的标识
     vm._isBeingDestroyed = true
+
     // remove self from parent
+    //从 parent 的 $children 中删掉自身
     const parent = vm.$parent
     if (parent && !parent._isBeingDestroyed && !vm.$options.abstract) {
       remove(parent.$children, vm)
     }
+
     // teardown watchers
+    // 删除 watcher
     if (vm._watcher) {
       vm._watcher.teardown()
     }
@@ -144,16 +155,21 @@ export function lifecycleMixin (Vue: Class<Component>) {
     }
     // call the last hook...
     vm._isDestroyed = true
+
     // invoke destroy hooks on current rendered tree
     vm.__patch__(vm._vnode, null)
+
     // fire destroyed hook
     callHook(vm, 'destroyed')
+
     // turn off all instance listeners.
     vm.$off()
+
     // remove __vue__ reference
     if (vm.$el) {
       vm.$el.__vue__ = null
     }
+
     // release circular reference (#6759)
     if (vm.$vnode) {
       vm.$vnode.parent = null
@@ -378,16 +394,26 @@ export function deactivateChildComponent (vm: Component, direct?: boolean) {
   }
 }
 
+/**
+ * 执行对应的生命周期钩子函数
+ * 在前面的 合并配置项 部分，生命周期钩子函数都已数组的形式合并到 vm.$options
+ * @param {*} vm
+ * @param {*} hook
+ */
 export function callHook (vm: Component, hook: string) {
   // #7573 disable dep collection when invoking lifecycle hooks
   pushTarget()
   const handlers = vm.$options[hook]
   const info = `${hook} hook`
   if (handlers) {
+    // reference: src/core/util/error.js
     for (let i = 0, j = handlers.length; i < j; i++) {
       invokeWithErrorHandling(handlers[i], vm, null, vm, info)
     }
   }
+
+  // 处理像这种写法  =>  @hook:mounted="handleChildMount"
+  // 在父组件绑定子组件的生命周期处理函数
   if (vm._hasHookEvent) {
     vm.$emit('hook:' + hook)
   }
