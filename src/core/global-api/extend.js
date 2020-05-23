@@ -16,6 +16,7 @@ export function initExtend (Vue: GlobalAPI) {
   /**
    * Class inheritance
    * 通过原型继承的方式构造一个基于 Vue 的子类
+   * extendOptions => 定义组件时传递的对象，会和 Vue.options（Super.options） 合并到 Sub.opitons 上
    */
   Vue.extend = function (extendOptions: Object): Function {
     extendOptions = extendOptions || {}

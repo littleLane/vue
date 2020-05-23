@@ -107,15 +107,19 @@ export function initMixin (Vue: Class<Component>) {
 /**
  * 将 new Vue 时传入的 options 和 Vue 实例上的一些属性合并到当前组件实例的 $options 上。
  * @param {*} vm 当前的组件实例
- * @param {*} options new Vue() 传入的的参数
+ * @param {*} options 组件实例化传入的的参数
  */
 export function initInternalComponent (vm: Component, options: InternalComponentOptions) {
-  const opts = vm.$options = Object.create(vm.constructor.options)
+  const opts = vm.$options = Object.create(vm.constructor.options /** Sub.options */)
   // doing this because it's faster than dynamic enumeration.
+  // 将实例化子组件传入的子组件父 VNode 实例 parentVnode
   const parentVnode = options._parentVnode
+
+  // 将子组件的父 Vue 实例 parent 保存到 vm.$options 中
   opts.parent = options.parent
   opts._parentVnode = parentVnode
 
+  // 保留了 parentVnode 配置中如 propsData 等其它的属性
   const vnodeComponentOptions = parentVnode.componentOptions
   opts.propsData = vnodeComponentOptions.propsData
   opts._parentListeners = vnodeComponentOptions.listeners
