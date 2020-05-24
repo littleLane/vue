@@ -63,7 +63,7 @@ export default class Watcher {
     if (options) {
       this.deep = !!options.deep
       this.user = !!options.user
-      this.lazy = !!options.lazy
+      this.lazy = !!options.lazy  // computed watcher 为 true
       this.sync = !!options.sync
       this.before = options.before
     } else {
@@ -98,6 +98,7 @@ export default class Watcher {
       }
     }
 
+    // this.lazy 为 true 不会立即求值
     this.value = this.lazy
       ? undefined
       : this.get()
@@ -252,6 +253,8 @@ export default class Watcher {
 
   /**
    * Depend on all deps collected by this watcher.
+   *    当前 watcher 的所有收集器都收一遍这个调用的 watcher
+   *    也就是 computed 依赖的属性的 dep
    */
   depend () {
     let i = this.deps.length

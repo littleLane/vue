@@ -203,14 +203,22 @@ export function getData (data: Function, vm: Component): any {
 
 const computedWatcherOptions = { lazy: true }
 
+/**
+ * 遍历 options.computed 每个属性，然后针对每个属性创建对应的 computed watcher
+ * @param {*} vm
+ * @param {*} computed
+ */
 function initComputed (vm: Component, computed: Object) {
   // $flow-disable-line
   const watchers = vm._computedWatchers = Object.create(null)
   // computed properties are just getters during SSR
   const isSSR = isServerRendering()
 
+  // 遍历 options.computed 每个属性
   for (const key in computed) {
     const userDef = computed[key]
+
+    // 每个 computed 可以为函数或者包含 get/set 属性的对象
     const getter = typeof userDef === 'function' ? userDef : userDef.get
     if (process.env.NODE_ENV !== 'production' && getter == null) {
       warn(
@@ -219,6 +227,7 @@ function initComputed (vm: Component, computed: Object) {
       )
     }
 
+    // 为每个属性创建对应的 computed watcher
     if (!isSSR) {
       // create internal watcher for the computed property.
       watchers[key] = new Watcher(
@@ -229,12 +238,14 @@ function initComputed (vm: Component, computed: Object) {
       )
     }
 
-    // component-defined computed properties are already defined on the
-    // component prototype. We only need to define computed properties defined
-    // at instantiation here.
+    // component-defined computed properties are already defined on the component prototype.
+    //    => reference: src/core/global-api/extend.js
+    // We only need to define computed properties defined at instantiation here.
     if (!(key in vm)) {
       defineComputed(vm, key, userDef)
     } else if (process.env.NODE_ENV !== 'production') {
+      // 在 options.data 或 options.props 上定义了 computed 属性，则发出警报
+      // 而且会覆盖 options.data 或 options.props 中的相同属性
       if (key in vm.$data) {
         warn(`The computed property "${key}" is already defined in data.`, vm)
       } else if (vm.$options.props && key in vm.$options.props) {
@@ -244,6 +255,12 @@ function initComputed (vm: Component, computed: Object) {
   }
 }
 
+/**
+ * 将 computed 绑定到 target 上
+ * @param {*} target
+ * @param {*} key
+ * @param {*} userDef
+ */
 export function defineComputed (
   target: any,
   key: string,
@@ -275,13 +292,22 @@ export function defineComputed (
   Object.defineProperty(target, key, sharedPropertyDefinition)
 }
 
+/**
+ * 执行这个方法的时候，会执行属性的 getter，getter 会触发依赖收集
+ * 当每个属性赋值时，会执行 setter，就会触发 notify
+ * @param {*} key
+ */
 function createComputedGetter (key) {
   return function computedGetter () {
     const watcher = this._computedWatchers && this._computedWatchers[key]
     if (watcher) {
+      // 获取执行 getter 结果
       if (watcher.dirty) {
         watcher.evaluate()
       }
+
+      // getter 做依赖收集
+      // 当前全局的渲染 watcher 订阅了当前的 computed watcher
       if (Dep.target) {
         watcher.depend()
       }
