@@ -70,6 +70,8 @@ if (inBrowser && !isIE) {
  */
 function flushSchedulerQueue () {
   currentFlushTimestamp = getNow()
+
+  // 设置正在执行队列标识为 true
   flushing = true
   let watcher, id
 
@@ -87,16 +89,28 @@ function flushSchedulerQueue () {
   // as we run existing watchers
   for (index = 0; index < queue.length; index++) {
     watcher = queue[index]
+
+    // case reference: src/core/instance/lifecycle.js
+    // before () {
+    //   if (vm._isMounted && !vm._isDestroyed) {
+    //     callHook(vm, 'beforeUpdate')
+    //   }
+    // }
     if (watcher.before) {
       watcher.before()
     }
+
+    // 将缓存里面对应的 watcher id 置为 null，避免再次触发更新时不会将 watchr 压入队列
     id = watcher.id
     has[id] = null
+
+    // 执行 watcher
     watcher.run()
+
     // in dev build, check and stop circular updates.
     if (process.env.NODE_ENV !== 'production' && has[id] != null) {
       circular[id] = (circular[id] || 0) + 1
-      if (circular[id] > MAX_UPDATE_COUNT) {
+      if (circular[id] > MAX_UPDATE_COUNT /* 100 次 */) {
         warn(
           'You may have an infinite update loop ' + (
             watcher.user
@@ -114,6 +128,7 @@ function flushSchedulerQueue () {
   const activatedQueue = activatedChildren.slice()
   const updatedQueue = queue.slice()
 
+  // 把控制流程状态的一些变量恢复到初始值，把 watcher 队列清空
   resetSchedulerState()
 
   // call component updated and activated hooks
@@ -160,9 +175,12 @@ function callActivatedHooks (queue) {
  * Push a watcher into the watcher queue.
  * Jobs with duplicate IDs will be skipped unless it's
  * pushed when the queue is being flushed.
+ * call reference: src/core/observer/watcher.js
  */
 export function queueWatcher (watcher: Watcher) {
   const id = watcher.id
+
+  // 保证同一个 watcher 只添加一次
   if (has[id] == null) {
     has[id] = true
     if (!flushing) {
@@ -170,13 +188,19 @@ export function queueWatcher (watcher: Watcher) {
     } else {
       // if already flushing, splice the watcher based on its id
       // if already past its id, it will be run next immediately.
+      // 如果队列已经在执行了，此时又来了一个 watcher
+      //    就根据当前 watcher 的 id，在当前正在执行的 watcher 之后找到一个 id 比传进来 warcher id 小的 watcher
+      //    并将传进来的 warcher 插入到查找到的 watcher 之后
+      // 或者是当前执行到的 watcher 之后
       let i = queue.length - 1
       while (i > index && queue[i].id > watcher.id) {
         i--
       }
       queue.splice(i + 1, 0, watcher)
     }
+
     // queue the flush
+    // 保证只调用一次 flushSchedulerQueue
     if (!waiting) {
       waiting = true
 

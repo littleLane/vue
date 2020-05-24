@@ -211,7 +211,10 @@ export default class Watcher {
    */
   run () {
     if (this.active) {
+      // 获取当前的新值
       const value = this.get()
+
+      // 如果满足新旧值不等、新值是对象类型、deep 模式任何一个条件
       if (
         value !== this.value ||
         // Deep watchers and watchers on Object/Arrays should fire even
@@ -223,6 +226,8 @@ export default class Watcher {
         // set new value
         const oldValue = this.value
         this.value = value
+
+        // 传入新值和老值执行回调
         if (this.user) {
           try {
             this.cb.call(this.vm, value, oldValue)
