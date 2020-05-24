@@ -1,15 +1,25 @@
 /* @flow */
 /* globals MutationObserver */
 
+// 1、Promise  ( IOS 会加入 setTimeout 促使微任务队列刷新 )
+// 2、MutationObserver
+// 3、setImmediate
+// 4、setTimeout
+
 import { noop } from 'shared/util'
 import { handleError } from './error'
 import { isIE, isIOS, isNative } from './env'
 
+// 标识是否使用微任务
 export let isUsingMicroTask = false
 
 const callbacks = []
 let pending = false
 
+/**
+ * 将 pending 置为 false
+ *依次执行每个回调函数
+ */
 function flushCallbacks () {
   pending = false
   const copies = callbacks.slice(0)
@@ -84,8 +94,15 @@ if (typeof Promise !== 'undefined' && isNative(Promise)) {
   }
 }
 
+/**
+ * nextTick 核心逻辑
+ * @param {*} cb 任务函数
+ * @param {*} ctx 指定任务函数在执行时的上下文
+ */
 export function nextTick (cb?: Function, ctx?: Object) {
   let _resolve
+
+  // 将 cb 进行包装，并将包装的函数压入 callbacks 队列
   callbacks.push(() => {
     if (cb) {
       try {
@@ -97,11 +114,15 @@ export function nextTick (cb?: Function, ctx?: Object) {
       _resolve(ctx)
     }
   })
+
   if (!pending) {
     pending = true
     timerFunc()
   }
+
   // $flow-disable-line
+  // 支持 Promise 方式使用
+  //    this.$nextTick().then(() => {})
   if (!cb && typeof Promise !== 'undefined') {
     return new Promise(resolve => {
       _resolve = resolve
