@@ -34,8 +34,8 @@ export default class Watcher {
   sync: boolean;
   dirty: boolean;
   active: boolean;
-  deps: Array<Dep>;
-  newDeps: Array<Dep>;
+  deps: Array<Dep>;     // 表示上一次添加的 Dep 实例数组
+  newDeps: Array<Dep>;  // 表示新添加的 Dep 实例数组
   depIds: SimpleSet;
   newDepIds: SimpleSet;
   before: ?Function;
@@ -49,11 +49,16 @@ export default class Watcher {
     options?: ?Object,
     isRenderWatcher?: boolean
   ) {
+    // 组件实例
     this.vm = vm
+
+    // 渲染 watcher，组件渲染
     if (isRenderWatcher) {
       vm._watcher = this
     }
+
     vm._watchers.push(this)
+
     // options
     if (options) {
       this.deep = !!options.deep
@@ -64,6 +69,7 @@ export default class Watcher {
     } else {
       this.deep = this.user = this.lazy = this.sync = false
     }
+
     this.cb = cb
     this.id = ++uid // uid for batching
     this.active = true
@@ -75,6 +81,7 @@ export default class Watcher {
     this.expression = process.env.NODE_ENV !== 'production'
       ? expOrFn.toString()
       : ''
+
     // parse expression for getter
     if (typeof expOrFn === 'function') {
       this.getter = expOrFn
@@ -90,6 +97,7 @@ export default class Watcher {
         )
       }
     }
+
     this.value = this.lazy
       ? undefined
       : this.get()
@@ -99,10 +107,14 @@ export default class Watcher {
    * Evaluate the getter, and re-collect dependencies.
    */
   get () {
+    // 将当前 watcher 记录到全局，并压入栈顶
     pushTarget(this)
+
     let value
     const vm = this.vm
+
     try {
+      // 执行 watcher 监听函数，也就是监听到数据变化后需要执行的逻辑
       value = this.getter.call(vm, vm)
     } catch (e) {
       if (this.user) {
@@ -113,10 +125,16 @@ export default class Watcher {
     } finally {
       // "touch" every property so they are all tracked as
       // dependencies for deep watching
+      // 如果 this.deep 为 true 表示需要深度响应式
+      // 通过触发对象的 getter 方法进行依赖的收集
       if (this.deep) {
         traverse(value)
       }
+
+      // 更新当前全局 watcher 为上一次的 watcher，表示当前 watcher 已经执行完毕
       popTarget()
+
+      // 依赖清空
       this.cleanupDeps()
     }
     return value
@@ -124,6 +142,7 @@ export default class Watcher {
 
   /**
    * Add a dependency to this directive.
+   * 将 dep 收集器实例存起来，并触发 dep.addSub 将当前 watcher 存入 dep
    */
   addDep (dep: Dep) {
     const id = dep.id
@@ -138,8 +157,14 @@ export default class Watcher {
 
   /**
    * Clean up for dependency collection.
+   * 考虑到一种场景：
+   *    我们的模板会根据 v-if 去渲染不同子模板 a 和 b。当我们满足某种条件的时候渲染 a 的时候，
+   *    会访问到 a 中的数据，这时候我们对 a 使用的数据添加了 getter，做了依赖收集，那么当我们去修改 a 的数据的时候，
+   *    理应通知到这些订阅者。那么如果我们一旦改变了条件渲染了 b 模板，又会对 b 使用的数据添加了 getter，
+   *    如果我们没有依赖移除的过程，那么这时候我去修改 a 模板的数据，会通知 a 数据的订阅的回调，这显然是有浪费的
    */
   cleanupDeps () {
+    // 遍历 deps，移除对 dep.subs 数组中 Wathcer 的订阅
     let i = this.deps.length
     while (i--) {
       const dep = this.deps[i]
@@ -147,13 +172,21 @@ export default class Watcher {
         dep.removeSub(this)
       }
     }
+
+    // 把 newDepIds 和 depIds 交换
     let tmp = this.depIds
     this.depIds = this.newDepIds
     this.newDepIds = tmp
+
+    // 清空 newDepIds
     this.newDepIds.clear()
+
+    // newDeps 和 deps 交换
     tmp = this.deps
     this.deps = this.newDeps
     this.newDeps = tmp
+
+     // 清空 newDeps
     this.newDeps.length = 0
   }
 

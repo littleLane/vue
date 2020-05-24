@@ -35,6 +35,12 @@ const sharedPropertyDefinition = {
   set: noop
 }
 
+/**
+ * 通过 Object.defineProperty 代理对象属性的访问
+ * @param {*} target
+ * @param {*} sourceKey
+ * @param {*} key
+ */
 export function proxy (target: Object, sourceKey: string, key: string) {
   sharedPropertyDefinition.get = function proxyGetter () {
     return this[sourceKey][key]
@@ -45,6 +51,11 @@ export function proxy (target: Object, sourceKey: string, key: string) {
   Object.defineProperty(target, key, sharedPropertyDefinition)
 }
 
+/**
+ * 初始化 data/props/methods/computed/watch
+ * call from => src/core/instance/init.js
+ * @param {*} vm
+ */
 export function initState (vm: Component) {
   vm._watchers = []
   const opts = vm.$options
@@ -61,6 +72,12 @@ export function initState (vm: Component) {
   }
 }
 
+/**
+ * 处理 options.props
+ *    只会对最外层的属性做响应式处理，不会做深度的响应式
+ * @param {*} vm
+ * @param {*} propsOptions
+ */
 function initProps (vm: Component, propsOptions: Object) {
   const propsData = vm.$options.propsData || {}
   const props = vm._props = {}
@@ -72,10 +89,14 @@ function initProps (vm: Component, propsOptions: Object) {
   if (!isRoot) {
     toggleObserving(false)
   }
+
+  // 遍历 options.props 上的每个 key 属性
   for (const key in propsOptions) {
     keys.push(key)
     const value = validateProp(key, propsOptions, propsData, vm)
+
     /* istanbul ignore else */
+    // 把每个 prop 对应的值变成响应式
     if (process.env.NODE_ENV !== 'production') {
       const hyphenatedKey = hyphenate(key)
       if (isReservedAttribute(hyphenatedKey) ||
@@ -102,6 +123,7 @@ function initProps (vm: Component, propsOptions: Object) {
     // static props are already proxied on the component's prototype
     // during Vue.extend(). We only need to proxy props defined at
     // instantiation here.
+    // 将 vm._props.xxx 的访问代理到 vm.xxx 上
     if (!(key in vm)) {
       proxy(vm, `_props`, key)
     }
@@ -109,11 +131,20 @@ function initProps (vm: Component, propsOptions: Object) {
   toggleObserving(true)
 }
 
+/**
+ * 处理 options.data
+ * @param {*} vm
+ */
 function initData (vm: Component) {
   let data = vm.$options.data
+
+  // 如果 data 是函数，就执行函数，获取返回的数据对象
+  // 如果 data 不是函数，做判空赋值
   data = vm._data = typeof data === 'function'
     ? getData(data, vm)
     : data || {}
+
+  // 函数返回的不是对象，就将 data 设置对 {}，然后警告提示
   if (!isPlainObject(data)) {
     data = {}
     process.env.NODE_ENV !== 'production' && warn(
@@ -123,6 +154,9 @@ function initData (vm: Component) {
     )
   }
   // proxy data on instance
+  // 1、data 里面定义的属性在 methods or props 同时存在就会发出警告
+  // 2、props 里面的属性最终会覆盖 data 里面存在的相同属性
+  // 3、methods 里面的属性会被 data 里面存在的相同属性覆盖
   const keys = Object.keys(data)
   const props = vm.$options.props
   const methods = vm.$options.methods
@@ -143,11 +177,14 @@ function initData (vm: Component) {
         `Use prop default value instead.`,
         vm
       )
-    } else if (!isReserved(key)) {
+    } else if (!isReserved(key) /* 以 $ 或者 _ 开头的属性 */) {
+      // 不是 props 里面的 key 而且不是以 $ 或者 _ 开头的属性就代理到 vm._data 上
+      // vm._data 保存的是最终会生效的 data 属性
       proxy(vm, `_data`, key)
     }
   }
   // observe data
+  // data 响应式处理
   observe(data, true /* asRootData */)
 }
 

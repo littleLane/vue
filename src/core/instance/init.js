@@ -80,7 +80,7 @@ export function initMixin (Vue: Class<Component>) {
     // 注意在初始化 data/props 之前
     initInjections(vm) // resolve injections before data/props
 
-    // 初始化 data/props
+    // 初始化 data/props/methods/computed/watch
     initState(vm)
 
     // 初始化 provide，在 data/props 之后

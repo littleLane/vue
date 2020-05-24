@@ -43,15 +43,24 @@ export class Observer {
     this.value = value
     this.dep = new Dep()
     this.vmCount = 0
+
+    // 给对象添加 __ob__ 属性并设置为当前的 Observer 实例
     def(value, '__ob__', this)
+
     if (Array.isArray(value)) {
+      // 对数组方法做拦截处理
+      // 如果支持 __proto__ 就直接修改 __proto__ 属性值
       if (hasProto) {
         protoAugment(value, arrayMethods)
       } else {
+        // 如果不支持 __proto__ 就遍历每个方法通过 defineProperty 设置属性
         copyAugment(value, arrayMethods, arrayKeys)
       }
+
+      // 对数组的每个元素做响应式处理
       this.observeArray(value)
     } else {
+      // 遍历对象的每个属性，实现响应式处理
       this.walk(value)
     }
   }
@@ -60,6 +69,7 @@ export class Observer {
    * Walk through all properties and convert them into
    * getter/setters. This method should only be called when
    * value type is Object.
+   * 遍历对象的每个属性，实现响应式处理
    */
   walk (obj: Object) {
     const keys = Object.keys(obj)
@@ -106,23 +116,32 @@ function copyAugment (target: Object, src: Object, keys: Array<string>) {
  * Attempt to create an observer instance for a value,
  * returns the new observer if successfully observed,
  * or the existing observer if the value already has one.
+ * data 响应式处理
+ * @param {*} value 需要响应式处理的数据
+ * @param {*} asRootData 是否为根数据，即 new Vue() 传递的 data
  */
 export function observe (value: any, asRootData: ?boolean): Observer | void {
+  // 不是对象或者是 VNode 实例就直接返回
   if (!isObject(value) || value instanceof VNode) {
     return
   }
+
   let ob: Observer | void
+
+  // 如果 value 上有 __ob__ 属性，说明已经响应式处理过了，直接返回
   if (hasOwn(value, '__ob__') && value.__ob__ instanceof Observer) {
     ob = value.__ob__
   } else if (
-    shouldObserve &&
-    !isServerRendering() &&
-    (Array.isArray(value) || isPlainObject(value)) &&
-    Object.isExtensible(value) &&
-    !value._isVue
+    shouldObserve &&    // 需要响应式标识为 true
+    !isServerRendering() &&   // 不是服务端渲染
+    (Array.isArray(value) || isPlainObject(value)) &&   // 对象或者数组
+    Object.isExtensible(value) &&   // 可扩展
+    !value._isVue   // 不是 Vue 对象本身
   ) {
     ob = new Observer(value)
   }
+
+  // 标识以这个作为根数据的 vm，为后面的销毁提供依据
   if (asRootData && ob) {
     ob.vmCount++
   }
@@ -131,6 +150,12 @@ export function observe (value: any, asRootData: ?boolean): Observer | void {
 
 /**
  * Define a reactive property on an Object.
+ * 定义对象属性响应式处理
+ * @param {*} obj 需要处理的对象
+ * @param {*} key 当前需要处理的对象属性
+ * @param {*} val 当前需要处理的对象属性对应的 value
+ * @param {*} customSetter 自定义的 setter
+ * @param {*} shallow 是否为浅响应式处理
  */
 export function defineReactive (
   obj: Object,
@@ -139,28 +164,45 @@ export function defineReactive (
   customSetter?: ?Function,
   shallow?: boolean
 ) {
+  // 实例化一个当前对象当前属性的依赖收集器
+  //    对象的每个属性都有一个依赖收集器
   const dep = new Dep()
 
+  // 获取属性本身的属性描述符
+  // 如果描述符 configurable 为 false 直接返回，因为表示不可配置
   const property = Object.getOwnPropertyDescriptor(obj, key)
   if (property && property.configurable === false) {
     return
   }
 
   // cater for pre-defined getter/setters
+  // 缓存属性原本的 getter 和 setter
   const getter = property && property.get
   const setter = property && property.set
   if ((!getter || setter) && arguments.length === 2) {
     val = obj[key]
   }
 
+  // 深度响应式处理
   let childOb = !shallow && observe(val)
+
+  // 重新定义属性的描述符对象
+  // 既然代码逻辑可以执行到这里，说明 enumerable 和 configurable 都为 true
   Object.defineProperty(obj, key, {
     enumerable: true,
     configurable: true,
     get: function reactiveGetter () {
       const value = getter ? getter.call(obj) : val
+
+      // 会有一个栈的结构依照父子组件顺序保存一连串的 watcher
+      // Dep.target 标识了当前处理的是哪个 watcher，
+      //    通过 pushTarget 赋值当前处理的 watcher
+      //    通过 popTarget 回到前一个 watcher
+      // 依赖收集 => 将 dep 存入当前的 watcher
       if (Dep.target) {
         dep.depend()
+
+        // 深入依赖收集
         if (childOb) {
           childOb.dep.depend()
           if (Array.isArray(value)) {
@@ -171,8 +213,11 @@ export function defineReactive (
       return value
     },
     set: function reactiveSetter (newVal) {
+      // 获取 old value 值
       const value = getter ? getter.call(obj) : val
+
       /* eslint-disable no-self-compare */
+      // 避免重复赋值或 NaN 赋值
       if (newVal === value || (newVal !== newVal && value !== value)) {
         return
       }
@@ -187,7 +232,11 @@ export function defineReactive (
       } else {
         val = newVal
       }
+
+      // 对赋值的值做深度响应式处理
       childOb = !shallow && observe(newVal)
+
+      // 触发所有收集到的相关 watchers
       dep.notify()
     }
   })
