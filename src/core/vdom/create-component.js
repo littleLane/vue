@@ -52,6 +52,11 @@ const componentVNodeHooks = {
     }
   },
 
+  /**
+   * 拿到新的 vnode 的组件配置以及组件实例，去执行 updateChildComponent 方法
+   * @param {*} oldVnode
+   * @param {*} vnode
+   */
   prepatch (oldVnode: MountedComponentVNode, vnode: MountedComponentVNode) {
     const options = vnode.componentOptions
     const child = vnode.componentInstance = oldVnode.componentInstance
@@ -84,10 +89,14 @@ const componentVNodeHooks = {
     }
   },
 
+  // 当前组件节点没有销毁（_isDestroyed 为 false），
+  // 且不是 keepAlive 就调用 $destroy => reference: src/core/instance/lifecycle.js
+  // 否则 deactivateChildComponent
   destroy (vnode: MountedComponentVNode) {
     const { componentInstance } = vnode
     if (!componentInstance._isDestroyed) {
       if (!vnode.data.keepAlive) {
+        // reference: src/core/instance/lifecycle.js
         componentInstance.$destroy()
       } else {
         deactivateChildComponent(componentInstance, true /* direct */)
