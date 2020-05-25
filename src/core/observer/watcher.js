@@ -126,7 +126,7 @@ export default class Watcher {
     } finally {
       // "touch" every property so they are all tracked as
       // dependencies for deep watching
-      // 如果 this.deep 为 true 表示需要深度响应式
+      // 如果 this.deep 为 true 表示对返回值做深度响应式
       // 通过触发对象的 getter 方法进行依赖的收集
       if (this.deep) {
         traverse(value)

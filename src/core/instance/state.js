@@ -350,7 +350,13 @@ function initMethods (vm: Component, methods: Object) {
   }
 }
 
+/**
+ * 初始化 watcher
+ * @param {*} vm
+ * @param {*} watch
+ */
 function initWatch (vm: Component, watch: Object) {
+  // 遍历处理每一个 watcher
   for (const key in watch) {
     const handler = watch[key]
     if (Array.isArray(handler)) {
@@ -363,6 +369,14 @@ function initWatch (vm: Component, watch: Object) {
   }
 }
 
+/**
+ * 为 options.watch 每一个 watcher 对应的每个 handler 创建一个 watcher
+ * 实则通过 vm.$watch 创建 watcher
+ * @param {*} vm
+ * @param {*} expOrFn
+ * @param {*} handler watcher 的处理函数，(函数) 或者 (包含 handler、deep、immediate 的对象) 或者 (handler 数组) 或者 (一个已经定义好的方法)
+ * @param {*} options
+ */
 function createWatcher (
   vm: Component,
   expOrFn: string | Function,
@@ -411,12 +425,21 @@ export function stateMixin (Vue: Class<Component>) {
     options?: Object
   ): Function {
     const vm: Component = this
+
+    // 如果 cb 即 handler 还是对象，继续递归调用 createWatcher
     if (isPlainObject(cb)) {
       return createWatcher(vm, expOrFn, cb, options)
     }
+
     options = options || {}
+
+    // 将当前 watcher 标记为 user watcher
     options.user = true
+
+    // 创建 watcher 实例
     const watcher = new Watcher(vm, expOrFn, cb, options)
+
+    // 如果设置了 immediate 为 true，就立即调用一次获取值
     if (options.immediate) {
       try {
         cb.call(vm, watcher.value)
@@ -424,6 +447,8 @@ export function stateMixin (Vue: Class<Component>) {
         handleError(error, vm, `callback for immediate watcher "${watcher.expression}"`)
       }
     }
+
+    // 返回一个函数，用于销毁 watcher
     return function unwatchFn () {
       watcher.teardown()
     }

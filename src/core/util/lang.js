@@ -29,6 +29,7 @@ export function def (obj: Object, key: string, val: any, enumerable?: boolean) {
 
 /**
  * Parse simple path.
+ * 格式化对象属性调用字符串 obj.a.b
  */
 const bailRE = new RegExp(`[^${unicodeRegExp.source}.$_\\d]`)
 export function parsePath (path: string): any {
@@ -37,6 +38,7 @@ export function parsePath (path: string): any {
   }
   const segments = path.split('.')
   return function (obj) {
+    // 每一次的取值都会触发属性的 getter，顺便收集依赖，如果需要的话
     for (let i = 0; i < segments.length; i++) {
       if (!obj) return
       obj = obj[segments[i]]
