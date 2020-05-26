@@ -88,7 +88,11 @@ function initProps (vm: Component, propsOptions: Object) {
   // instead of dynamic object key enumeration.
   const keys = vm.$options._propKeys = []
   const isRoot = !vm.$parent
+
   // root instance props should be converted
+  // 因为子组件的 prop 和父组件传递的 prop 值指向同一对象，
+  // 只要父组件的 prop 值变化，就会触发子组件的重新渲染
+  // 所以深度响应式逻辑可以省略
   if (!isRoot) {
     toggleObserving(false)
   }

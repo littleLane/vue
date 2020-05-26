@@ -62,7 +62,7 @@ const componentVNodeHooks = {
     const child = vnode.componentInstance = oldVnode.componentInstance
     updateChildComponent(
       child,
-      options.propsData, // updated props
+      options.propsData, // updated props  父组件传递的 props
       options.listeners, // updated listeners
       vnode, // new parent vnode
       options.children // new children
@@ -179,7 +179,7 @@ export function createComponent (
     transformModel(Ctor.options, data)
   }
 
-  // extract props
+  // extract props，提取出父组件传给子组件的 props
   const propsData = extractPropsFromVNodeData(data, Ctor, tag)
 
   // functional component
