@@ -75,10 +75,13 @@ export function initState (vm: Component) {
 /**
  * 处理 options.props
  *    只会对最外层的属性做响应式处理，不会做深度的响应式
+ *
+ * 校验，响应式，代理
  * @param {*} vm
  * @param {*} propsOptions
  */
 function initProps (vm: Component, propsOptions: Object) {
+  // 从父组件传递过来的 props 数据
   const propsData = vm.$options.propsData || {}
   const props = vm._props = {}
   // cache prop keys so that future props updates can iterate using Array
@@ -93,11 +96,14 @@ function initProps (vm: Component, propsOptions: Object) {
   // 遍历 options.props 上的每个 key 属性
   for (const key in propsOptions) {
     keys.push(key)
+
+    // 对父组件传入的 props 进行合法性校验
     const value = validateProp(key, propsOptions, propsData, vm)
 
     /* istanbul ignore else */
     // 把每个 prop 对应的值变成响应式
     if (process.env.NODE_ENV !== 'production') {
+      // 校验 prop 的 key 是否是 HTML 的保留属性，并给出警告
       const hyphenatedKey = hyphenate(key)
       if (isReservedAttribute(hyphenatedKey) ||
           config.isReservedAttr(hyphenatedKey)) {
@@ -106,7 +112,10 @@ function initProps (vm: Component, propsOptions: Object) {
           vm
         )
       }
+
+      // 添加自定义 setter，当直接对 prop 赋值的时候会输出警告
       defineReactive(props, key, value, () => {
+        // 不是根实例，且不是父组件修改 props 触发的更新
         if (!isRoot && !isUpdatingChildComponent) {
           warn(
             `Avoid mutating a prop directly since the value will be ` +
@@ -120,6 +129,7 @@ function initProps (vm: Component, propsOptions: Object) {
     } else {
       defineReactive(props, key, value)
     }
+
     // static props are already proxied on the component's prototype
     // during Vue.extend(). We only need to proxy props defined at
     // instantiation here.
@@ -128,6 +138,7 @@ function initProps (vm: Component, propsOptions: Object) {
       proxy(vm, `_props`, key)
     }
   }
+
   toggleObserving(true)
 }
 

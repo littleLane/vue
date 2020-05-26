@@ -303,6 +303,7 @@ export function validateComponentName (name: string) {
  * Ensure all props option syntax are normalized into the
  * Object-based format.
  * 格式化 props
+ * 处理组件的对象中的 option，然后挂载到组件的实例 this.$options 中。
  * @param {*} options
  * @param {*} vm
  */
