@@ -18,13 +18,19 @@ function createFunction (code, errors) {
   }
 }
 
+/**
+ * 创建一个编译器，将 template 编译成 Render Function
+ * 返回编译函数
+ * @param {*} compile
+ */
 export function createCompileToFunctionFn (compile: Function): Function {
   const cache = Object.create(null)
 
+  // 最终的 将 template 编译成 Render Function
   return function compileToFunctions (
-    template: string,
-    options?: CompilerOptions,
-    vm?: Component
+    template: string,           // 需要编译的 options.template
+    options?: CompilerOptions,  // 编译配置参数 baseOptions，reference: src/platforms/web/compiler/options.js
+    vm?: Component              // Vue 实例 或 组件实例
   ): CompiledFunctionResult {
     options = extend({}, options)
     const warn = options.warn || baseWarn
@@ -57,6 +63,8 @@ export function createCompileToFunctionFn (compile: Function): Function {
     }
 
     // compile
+    // core compile function
+    // reference: src/compiler/create-compiler.js
     const compiled = compile(template, options)
 
     // check compilation errors/tips

@@ -4,12 +4,20 @@ import { extend } from 'shared/util'
 import { detectErrors } from './error-detector'
 import { createCompileToFunctionFn } from './to-function'
 
+/**
+ * 根据传入的基础编译函数创建一个 编译器创建函数
+ * @param {*} baseCompile
+ */
 export function createCompilerCreator (baseCompile: Function): Function {
+  // 返回编译器创建函数，接受编译所需的基础参数
+  // 最后返回 编译函数 和 将 template 编译成 Render Function 的编译函数
   return function createCompiler (baseOptions: CompilerOptions) {
+    // core compile
     function compile (
-      template: string,
-      options?: CompilerOptions
+      template: string,         // 需要编译的 options.template
+      options?: CompilerOptions // 编译配置参数 baseOptions，reference: src/platforms/web/compiler/options.js
     ): CompiledResult {
+      // 处理编译配置参数 ========== start ========
       const finalOptions = Object.create(baseOptions)
       const errors = []
       const tips = []
@@ -58,6 +66,7 @@ export function createCompilerCreator (baseCompile: Function): Function {
 
       finalOptions.warn = warn
 
+      // really compile logic
       const compiled = baseCompile(template.trim(), finalOptions)
       if (process.env.NODE_ENV !== 'production') {
         detectErrors(compiled.ast, warn)

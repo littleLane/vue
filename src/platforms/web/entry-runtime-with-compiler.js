@@ -79,6 +79,7 @@ Vue.prototype.$mount = function (
         mark('compile')
       }
 
+      // 将模板 template 编译生成 render 以及 staticRenderFns
       const { render, staticRenderFns } = compileToFunctions(template, {
         outputSourceRange: process.env.NODE_ENV !== 'production',
         shouldDecodeNewlines,
