@@ -21,22 +21,31 @@ export function parseText (
   text: string,
   delimiters?: [string, string]
 ): TextParseResult | void {
+  // 根据分隔符（默认是 {{}}）构造了文本匹配的正则表达式
   const tagRE = delimiters ? buildRegex(delimiters) : defaultTagRE
+
   if (!tagRE.test(text)) {
     return
   }
+
   const tokens = []
   const rawTokens = []
   let lastIndex = tagRE.lastIndex = 0
   let match, index, tokenValue
+
+  // 遍历匹配文本
   while ((match = tagRE.exec(text))) {
     index = match.index
     // push text token
+    // 遇到普通文本就 push 到 rawTokens 和 tokens 中
     if (index > lastIndex) {
       rawTokens.push(tokenValue = text.slice(lastIndex, index))
       tokens.push(JSON.stringify(tokenValue))
     }
+
     // tag token
+    // 如果是表达式就转换成 _s(${exp}) push 到 tokens 中，
+    // 以及转换成 {@binding:exp} push 到 rawTokens 中。
     const exp = parseFilters(match[1].trim())
     tokens.push(`_s(${exp})`)
     rawTokens.push({ '@binding': exp })

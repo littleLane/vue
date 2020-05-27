@@ -51,6 +51,11 @@ function decodeAttr (value, shouldDecodeNewlines) {
   return value.replace(re, match => decodingMap[match])
 }
 
+/**
+ * 解析 template 模板
+ * @param {*} html options.template 模板
+ * @param {*} options 解析模板所需要的配置参数
+ */
 export function parseHTML (html, options) {
   const stack = []
   const expectHTML = options.expectHTML
@@ -58,13 +63,19 @@ export function parseHTML (html, options) {
   const canBeLeftOpenTag = options.canBeLeftOpenTag || no
   let index = 0
   let last, lastTag
+
+  // 从头到尾每个字符串遍历解析 template 模板
   while (html) {
     last = html
     // Make sure we're not in a plaintext content element like script/style
+    // 如果 lastTage 不存在 或者 lastTag 不是 script,style,textarea 标签
     if (!lastTag || !isPlainTextElement(lastTag)) {
+      // 以 < 开头 ====== start =======
       let textEnd = html.indexOf('<')
       if (textEnd === 0) {
+
         // Comment:
+        // 注释节点
         if (comment.test(html)) {
           const commentEnd = html.indexOf('-->')
 
@@ -78,6 +89,7 @@ export function parseHTML (html, options) {
         }
 
         // http://en.wikipedia.org/wiki/Conditional_comment#Downlevel-revealed_conditional_comment
+        // 条件注释节点
         if (conditionalComment.test(html)) {
           const conditionalEnd = html.indexOf(']>')
 
@@ -88,6 +100,7 @@ export function parseHTML (html, options) {
         }
 
         // Doctype:
+        // DOCTYPE 文档标识
         const doctypeMatch = html.match(doctype)
         if (doctypeMatch) {
           advance(doctypeMatch[0].length)
@@ -95,6 +108,7 @@ export function parseHTML (html, options) {
         }
 
         // End tag:
+        // 闭合标签
         const endTagMatch = html.match(endTag)
         if (endTagMatch) {
           const curIndex = index
@@ -104,6 +118,7 @@ export function parseHTML (html, options) {
         }
 
         // Start tag:
+        // 开始标签
         const startTagMatch = parseStartTag()
         if (startTagMatch) {
           handleStartTag(startTagMatch)
@@ -114,6 +129,9 @@ export function parseHTML (html, options) {
         }
       }
 
+      // textEnd 大于等于 0，说明模板现状
+      // 1、a><div></div> 已经解析了一部分
+      // 2、asa<asasa 文本的一部分
       let text, rest, next
       if (textEnd >= 0) {
         rest = html.slice(textEnd)
@@ -132,6 +150,7 @@ export function parseHTML (html, options) {
         text = html.substring(0, textEnd)
       }
 
+      // 整个 template 解析完毕了，把剩余的 html 都赋值给了 text
       if (textEnd < 0) {
         text = html
       }
@@ -179,20 +198,28 @@ export function parseHTML (html, options) {
   // Clean up any remaining tags
   parseEndTag()
 
+  // 用于将遍历的下标向前移动，直至 template 结尾
   function advance (n) {
     index += n
     html = html.substring(n)
   }
 
+  // 解析开始标签
   function parseStartTag () {
+    // 匹配开始标签
     const start = html.match(startTagOpen)
+
     if (start) {
+      // 生成 match 对象
       const match = {
-        tagName: start[1],
-        attrs: [],
-        start: index
+        tagName: start[1],    // 标签名
+        attrs: [],            // 标签属性
+        start: index          // 标签开始的 index
       }
+
       advance(start[0].length)
+
+      // 遍历匹配开始标签中的属性并添加到 match.attrs，直到匹配的开始标签的闭合符结束
       let end, attr
       while (!(end = html.match(startTagClose)) && (attr = html.match(dynamicArgAttribute) || html.match(attribute))) {
         attr.start = index
@@ -200,6 +227,8 @@ export function parseHTML (html, options) {
         attr.end = index
         match.attrs.push(attr)
       }
+
+      // 如果匹配到闭合符，则获取一元斜线符，前进到闭合符尾，并把当前索引赋值给 match.end
       if (end) {
         match.unarySlash = end[1]
         advance(end[0].length)
@@ -214,9 +243,11 @@ export function parseHTML (html, options) {
     const unarySlash = match.unarySlash
 
     if (expectHTML) {
+      // 对 p 标签不能包裹的元素，直接封闭 p 标签
       if (lastTag === 'p' && isNonPhrasingTag(tagName)) {
         parseEndTag(lastTag)
       }
+
       if (canBeLeftOpenTag(tagName) && lastTag === tagName) {
         parseEndTag(tagName)
       }
@@ -224,6 +255,7 @@ export function parseHTML (html, options) {
 
     const unary = isUnaryTag(tagName) || !!unarySlash
 
+    // 对 match.attrs 进行遍历
     const l = match.attrs.length
     const attrs = new Array(l)
     for (let i = 0; i < l; i++) {
@@ -232,16 +264,19 @@ export function parseHTML (html, options) {
       const shouldDecodeNewlines = tagName === 'a' && args[1] === 'href'
         ? options.shouldDecodeNewlinesForHref
         : options.shouldDecodeNewlines
+
       attrs[i] = {
         name: args[1],
         value: decodeAttr(value, shouldDecodeNewlines)
       }
+
       if (process.env.NODE_ENV !== 'production' && options.outputSourceRange) {
         attrs[i].start = args.start + args[0].match(/^\s*/).length
         attrs[i].end = args.end
       }
     }
 
+    // 判断如果非一元标签，则往 stack 里 push 一个对象，并且把 tagName 赋值给 lastTag
     if (!unary) {
       stack.push({ tag: tagName, lowerCasedTag: tagName.toLowerCase(), attrs: attrs, start: match.start, end: match.end })
       lastTag = tagName
@@ -252,12 +287,14 @@ export function parseHTML (html, options) {
     }
   }
 
+  // 解析结束标签
   function parseEndTag (tagName, start, end) {
     let pos, lowerCasedTagName
     if (start == null) start = index
     if (end == null) end = index
 
     // Find the closest opened tag of the same type
+    // 倒序遍历 stack，找到第一个和当前 endTag 匹配的元素
     if (tagName) {
       lowerCasedTagName = tagName.toLowerCase()
       for (pos = stack.length - 1; pos >= 0; pos--) {
