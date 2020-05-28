@@ -40,18 +40,31 @@ export type CodegenResult = {
   staticRenderFns: Array<string>
 };
 
+/**
+ * AST 转代码
+ * @param {*} ast
+ * @param {*} options
+ */
 export function generate (
   ast: ASTElement | void,
   options: CompilerOptions
 ): CodegenResult {
   const state = new CodegenState(options)
+
+  // 将 AST 转换为 code
   const code = ast ? genElement(ast, state) : '_c("div")'
+
   return {
     render: `with(this){return ${code}}`,
     staticRenderFns: state.staticRenderFns
   }
 }
 
+/**
+ * really AST to code
+ * @param {*} el
+ * @param {*} state
+ */
 export function genElement (el: ASTElement, state: CodegenState): string {
   if (el.parent) {
     el.pre = el.pre || el.parent.pre
@@ -162,6 +175,7 @@ function genIfConditions (
     return altEmpty || '_e()'
   }
 
+  // 递归 genIfConditions 依次从 conditions 获取第一个 condition，然后通过对 condition.exp 去生成一段三元运算符的代码
   const condition = conditions.shift()
   if (condition.exp) {
     return `(${condition.exp})?${
@@ -183,6 +197,14 @@ function genIfConditions (
   }
 }
 
+/**
+ * 首先 AST 元素节点中获取了和 for 相关的一些属性，
+ * 然后返回了一个代码字符串。
+ * @param {*} el
+ * @param {*} state
+ * @param {*} altGen
+ * @param {*} altHelper
+ */
 export function genFor (
   el: any,
   state: CodegenState,
@@ -210,12 +232,18 @@ export function genFor (
   }
 
   el.forProcessed = true // avoid recursion
+
   return `${altHelper || '_l'}((${exp}),` +
     `function(${alias}${iterator1}${iterator2}){` +
       `return ${(altGen || genElement)(el, state)}` +
     '})'
 }
 
+/**
+ * 根据 AST 元素节点的属性构造出一个 data 对象字符串
+ * @param {*} el
+ * @param {*} state
+ */
 export function genData (el: ASTElement, state: CodegenState): string {
   let data = '{'
 
