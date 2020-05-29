@@ -35,6 +35,7 @@ export default function model (
   }
 
   if (el.component) {
+    // reference: src/compiler/directives/model
     genComponentModel(el, value, modifiers)
     // component v-model doesn't need extra runtime
     return false
@@ -124,6 +125,12 @@ function genSelect (
   addHandler(el, 'change', code, null, true)
 }
 
+/**
+ * input or textarea
+ * @param {*} el
+ * @param {*} value
+ * @param {*} modifiers
+ */
 function genDefaultModel (
   el: ASTElement,
   value: string,
@@ -155,19 +162,28 @@ function genDefaultModel (
       : 'input'
 
   let valueExpression = '$event.target.value'
+
+  // trim 修饰符
   if (trim) {
     valueExpression = `$event.target.value.trim()`
   }
+
+  // number 修饰符
   if (number) {
     valueExpression = `_n(${valueExpression})`
   }
 
+  // reference: srcc/compiler/directives/model
   let code = genAssignmentCode(value, valueExpression)
   if (needCompositionGuard) {
     code = `if($event.target.composing)return;${code}`
   }
 
+  // reference: src/compiler/helper
+  // 绑定 value 属性
   addProp(el, 'value', `(${value})`)
+
+  // 根据绑定的修饰符情况，绑定对应的事件 change or input or __r
   addHandler(el, event, code, null, true)
   if (trim || number) {
     addHandler(el, 'blur', '$forceUpdate()')

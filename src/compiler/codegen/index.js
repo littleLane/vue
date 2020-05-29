@@ -334,9 +334,16 @@ export function genData (el: ASTElement, state: CodegenState): string {
   return data
 }
 
+/**
+ * 生成指令代码
+ * @param {*} el
+ * @param {*} state
+ */
 function genDirectives (el: ASTElement, state: CodegenState): string | void {
   const dirs = el.directives
   if (!dirs) return
+
+  // 遍历 el.directives，对每个指令进行代码拼接
   let res = 'directives:['
   let hasRuntime = false
   let i, l, dir, needRuntime
@@ -349,6 +356,7 @@ function genDirectives (el: ASTElement, state: CodegenState): string | void {
       // returns true if it also needs a runtime counterpart.
       needRuntime = !!gen(el, dir, state.warn)
     }
+
     if (needRuntime) {
       hasRuntime = true
       res += `{name:"${dir.name}",rawName:"${dir.rawName}"${
