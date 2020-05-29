@@ -4,6 +4,8 @@ import type VNode from 'core/vdom/vnode'
 
 /**
  * Runtime helper for resolving raw children VNodes into a slot object.
+ * @param {*} children  对应父 vnode 的 children
+ * @param {*} context   父 vnode 的上下文，也就是父组件的 vm 实例
  */
 export function resolveSlots (
   children: ?Array<VNode>,
@@ -12,7 +14,10 @@ export function resolveSlots (
   if (!children || !children.length) {
     return {}
   }
+
   const slots = {}
+
+  // 遍历对应父 vnode 的 children
   for (let i = 0, l = children.length; i < l; i++) {
     const child = children[i]
     const data = child.data
@@ -27,6 +32,7 @@ export function resolveSlots (
     if ((child.context === context || child.fnContext === context) &&
       data && data.slot != null
     ) {
+      // 获取插槽名称
       const name = data.slot
       const slot = (slots[name] || (slots[name] = []))
       if (child.tag === 'template') {

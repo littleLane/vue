@@ -654,7 +654,9 @@ function processOnce (el) {
 function processSlotContent (el) {
   let slotScope
   if (el.tag === 'template') {
+    // 获取 slot 匹配的属性，并从 attrsList 中移除
     slotScope = getAndRemoveAttr(el, 'scope')
+
     /* istanbul ignore if */
     if (process.env.NODE_ENV !== 'production' && slotScope) {
       warn(
@@ -682,10 +684,14 @@ function processSlotContent (el) {
   }
 
   // slot="xxx"
+  // 1、获取动态绑定属性 slot  ===> :slot 或 v-bind:slot
+  // 2、获取 slot 属性值
   const slotTarget = getBindingAttr(el, 'slot')
+
   if (slotTarget) {
     el.slotTarget = slotTarget === '""' ? '"default"' : slotTarget
     el.slotTargetDynamic = !!(el.attrsMap[':slot'] || el.attrsMap['v-bind:slot'])
+
     // preserve slot as an attribute for native shadow DOM compat
     // only for non-scoped slots.
     if (el.tag !== 'template' && !el.slotScope) {
@@ -786,6 +792,7 @@ function getSlotName (binding) {
 }
 
 // handle <slot/> outlets
+// 获取 slot 标签的 name 属性值
 function processSlotOutlet (el) {
   if (el.tag === 'slot') {
     el.slotName = getBindingAttr(el, 'name')

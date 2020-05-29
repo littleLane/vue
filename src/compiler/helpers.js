@@ -25,6 +25,14 @@ export function addProp (el: ASTElement, name: string, value: string, range?: Ra
   el.plain = false
 }
 
+/**
+ * 给对应的 AST 元素节点添加 slot 属性对象
+ * @param {*} el
+ * @param {*} name
+ * @param {*} value
+ * @param {*} range
+ * @param {*} dynamic
+ */
 export function addAttr (el: ASTElement, name: string, value: any, range?: Range, dynamic?: boolean) {
   const attrs = dynamic
     ? (el.dynamicAttrs || (el.dynamicAttrs = []))
@@ -182,17 +190,27 @@ export function getRawBindingAttr (
     el.rawAttrsMap[name]
 }
 
+/**
+ * 1、获取动态绑定属性 slot  ===> :slot 或 v-bind:slot
+ * 2、获取 slot 属性值
+ * @param {*} el
+ * @param {*} name
+ * @param {*} getStatic
+ */
 export function getBindingAttr (
   el: ASTElement,
   name: string,
   getStatic?: boolean
 ): ?string {
+  // 获取动态绑定属性 slot  ===> :slot 或 v-bind:slot
   const dynamicValue =
     getAndRemoveAttr(el, ':' + name) ||
     getAndRemoveAttr(el, 'v-bind:' + name)
+
   if (dynamicValue != null) {
     return parseFilters(dynamicValue)
   } else if (getStatic !== false) {
+    // 获取 slot 属性值
     const staticValue = getAndRemoveAttr(el, name)
     if (staticValue != null) {
       return JSON.stringify(staticValue)

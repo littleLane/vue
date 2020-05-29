@@ -496,6 +496,14 @@ function genScopedSlot (
   return `{key:${el.slotTarget || `"default"`},fn:${fn}${reverseProxy}}`
 }
 
+/**
+ * 将 <slot> 标签包裹的内容生成代码
+ * @param {*} el
+ * @param {*} state
+ * @param {*} checkSkip
+ * @param {*} altGenElement
+ * @param {*} altGenNode
+ */
 export function genChildren (
   el: ASTElement,
   state: CodegenState,
@@ -517,9 +525,11 @@ export function genChildren (
         : ``
       return `${(altGenElement || genElement)(el, state)}${normalizationType}`
     }
+
     const normalizationType = checkSkip
       ? getNormalizationType(children, state.maybeComponent)
       : 0
+
     const gen = altGenNode || genNode
     return `[${children.map(c => gen(c, state)).join(',')}]${
       normalizationType ? `,${normalizationType}` : ''
@@ -579,6 +589,11 @@ export function genComment (comment: ASTText): string {
   return `_e(${JSON.stringify(comment.text)})`
 }
 
+/**
+ * 生成 slot 代码
+ * @param {*} el
+ * @param {*} state
+ */
 function genSlot (el: ASTElement, state: CodegenState): string {
   const slotName = el.slotName || '"default"'
   const children = genChildren(el, state)
