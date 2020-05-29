@@ -15,6 +15,7 @@ export function renderSlot (
   props: ?Object,
   bindObject: ?Object
 ): ?Array<VNode> {
+  // reference: src/core/instance/render.js
   const scopedSlotFn = this.$scopedSlots[name]
   let nodes
   if (scopedSlotFn) { // scoped slot

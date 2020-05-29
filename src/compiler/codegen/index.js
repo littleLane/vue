@@ -393,6 +393,12 @@ function genInlineTemplate (el: ASTElement, state: CodegenState): ?string {
   }
 }
 
+/**
+ * 生成 ScopedSlots 代码
+ * @param {*} el
+ * @param {*} slots
+ * @param {*} state
+ */
 function genScopedSlots (
   el: ASTElement,
   slots: { [key: string]: ASTElement },
@@ -402,7 +408,7 @@ function genScopedSlots (
   // components with only scoped slots to skip forced updates from parent.
   // but in some cases we have to bail-out of this optimization
   // for example if the slot contains dynamic names, has v-if or v-for on them...
-  let needsForceUpdate = el.for || Object.keys(slots).some(key => {
+  let needsForceUpdate = el.for || Object.keys(slots).some(key /** 插槽名称 */ => {
     const slot = slots[key]
     return (
       slot.slotTargetDynamic ||

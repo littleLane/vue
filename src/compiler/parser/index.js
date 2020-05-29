@@ -653,6 +653,8 @@ function processOnce (el) {
 // e.g. <template slot="xxx">, <div slot-scope="xxx">
 function processSlotContent (el) {
   let slotScope
+
+  // 处理 template 上的 slot，支持 2.6.x slot 新特性
   if (el.tag === 'template') {
     // 获取 slot 匹配的属性，并从 attrsList 中移除
     slotScope = getAndRemoveAttr(el, 'scope')
@@ -670,6 +672,7 @@ function processSlotContent (el) {
     }
     el.slotScope = slotScope || getAndRemoveAttr(el, 'slot-scope')
   } else if ((slotScope = getAndRemoveAttr(el, 'slot-scope'))) {
+    // 处理 slot-scope 属性
     /* istanbul ignore if */
     if (process.env.NODE_ENV !== 'production' && el.attrsMap['v-for']) {
       warn(
