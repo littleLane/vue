@@ -4,13 +4,20 @@ import { inBrowser, isIE9 } from 'core/util/index'
 import { addClass, removeClass } from './class-util'
 import { remove, extend, cached } from 'shared/util'
 
+/**
+ * 解析过渡数据
+ * @param {*} def
+ */
 export function resolveTransition (def?: string | Object): ?Object {
   if (!def) {
     return
   }
+
   /* istanbul ignore else */
   if (typeof def === 'object') {
     const res = {}
+
+    // props.css
     if (def.css !== false) {
       extend(res, autoCssTransition(def.name || 'v'))
     }
@@ -64,12 +71,21 @@ const raf = inBrowser
     : setTimeout
   : /* istanbul ignore next */ fn => fn()
 
+/**
+ * 下一帧执行
+ * @param {*} fn
+ */
 export function nextFrame (fn: Function) {
   raf(() => {
     raf(fn)
   })
 }
 
+/**
+ * 给当前 DOM 元素 el 添加样式 cls
+ * @param {*} el
+ * @param {*} cls
+ */
 export function addTransitionClass (el: any, cls: string) {
   const transitionClasses = el._transitionClasses || (el._transitionClasses = [])
   if (transitionClasses.indexOf(cls) < 0) {

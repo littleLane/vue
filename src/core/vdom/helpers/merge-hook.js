@@ -4,10 +4,17 @@ import VNode from '../vnode'
 import { createFnInvoker } from './update-listeners'
 import { remove, isDef, isUndef, isTrue } from 'shared/util'
 
+/**
+ * 把 hook 函数合并到 def.data.hook[hookey] 中，生成新的 invoker
+ * @param {*} def
+ * @param {*} hookKey
+ * @param {*} hook
+ */
 export function mergeVNodeHook (def: Object, hookKey: string, hook: Function) {
   if (def instanceof VNode) {
     def = def.data.hook || (def.data.hook = {})
   }
+
   let invoker
   const oldHook = def[hookKey]
 

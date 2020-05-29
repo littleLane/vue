@@ -40,13 +40,19 @@ function getRealChild (vnode: ?VNode): ?VNode {
   }
 }
 
+/**
+ * 获取组件的 options 配置、events
+ * @param {*} comp
+ */
 export function extractTransitionData (comp: Component): Object {
   const data = {}
   const options: ComponentOptions = comp.$options
+
   // props
   for (const key in options.propsData) {
     data[key] = comp[key]
   }
+
   // events.
   // extract listeners and pass them directly to the transition methods
   const listeners: ?Object = options._parentListeners
@@ -64,6 +70,10 @@ function placeholder (h: Function, rawChild: VNode): ?VNode {
   }
 }
 
+/**
+ * 判断父节点是否已经添加 transition
+ * @param {*} vnode
+ */
 function hasParentTransition (vnode: VNode): ?boolean {
   while ((vnode = vnode.parent)) {
     if (vnode.data.transition) {
@@ -107,6 +117,9 @@ export default {
       )
     }
 
+    // 控制离开/进入过渡的时间序列。
+    // 有效的模式有 "out-in" 和 "in-out"；
+    // 默认同时进行
     const mode: string = this.mode
 
     // warn invalid mode
@@ -119,6 +132,7 @@ export default {
       )
     }
 
+    // 只对第一个子节点做处理
     const rawChild: VNode = children[0]
 
     // if this is a component root node and the component's
@@ -130,11 +144,13 @@ export default {
     // apply transition data to child
     // use getRealChild() to ignore abstract components e.g. keep-alive
     const child: ?VNode = getRealChild(rawChild)
+
     /* istanbul ignore if */
     if (!child) {
       return rawChild
     }
 
+    // 处理 keep-alive
     if (this._leaving) {
       return placeholder(h, rawChild)
     }
@@ -143,6 +159,8 @@ export default {
     // component instance. This key will be used to remove pending leaving nodes
     // during entering.
     const id: string = `__transition-${this._uid}-`
+
+    // 获取节点 key
     child.key = child.key == null
       ? child.isComment
         ? id + 'comment'
