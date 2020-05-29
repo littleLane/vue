@@ -29,6 +29,12 @@ function remove (event, fn) {
   target.$off(event, fn)
 }
 
+/**
+ * 通过闭包的形式包装事件处理函数
+ * 事件处理函数执行一次后就解绑
+ * @param {*} event
+ * @param {*} fn
+ */
 function createOnceHandler (event, fn) {
   const _target = target
   return function onceHandler () {

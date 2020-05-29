@@ -11,6 +11,7 @@ import {
   isPlainObject
 } from 'shared/util'
 
+// 对 once、capture、passive 等修饰符进行解析
 const normalizeEvent = cached((name: string): {
   name: string,
   once: boolean,
@@ -50,6 +51,15 @@ export function createFnInvoker (fns: Function | Array<Function>, vm: ?Component
   return invoker
 }
 
+/**
+ * 更新绑定的事件函数
+ * @param {*} on
+ * @param {*} oldOn
+ * @param {*} add               // reference: src/platforms/web/runtime/modules/events.js 实际逻辑就是通过 addEventListener 对事件进行绑定
+ * @param {*} remove            // reference: src/platforms/web/runtime/modules/events.js 实际逻辑就是通过 removeEventListener 对事件进行解绑
+ * @param {*} createOnceHandler
+ * @param {*} vm
+ */
 export function updateListeners (
   on: Object,
   oldOn: Object,
@@ -59,33 +69,42 @@ export function updateListeners (
   vm: Component
 ) {
   let name, def, cur, old, event
+
+  // 遍历新绑定的事件
   for (name in on) {
     def = cur = on[name]
     old = oldOn[name]
     event = normalizeEvent(name)
+
     /* istanbul ignore if */
     if (__WEEX__ && isPlainObject(def)) {
       cur = def.handler
       event.params = def.params
     }
+
     if (isUndef(cur)) {
       process.env.NODE_ENV !== 'production' && warn(
         `Invalid handler for event "${event.name}": got ` + String(cur),
         vm
       )
     } else if (isUndef(old)) {
+      // 新增绑定事件
       if (isUndef(cur.fns)) {
         cur = on[name] = createFnInvoker(cur, vm)
       }
+
+      // 对 once 修饰符绑定的事件进行处理
       if (isTrue(event.once)) {
         cur = on[name] = createOnceHandler(event.name, cur, event.capture)
       }
+
       add(event.name, cur, event.capture, event.passive, event.params)
     } else if (cur !== old) {
       old.fns = cur
       on[name] = old
     }
   }
+
   for (name in oldOn) {
     if (isUndef(on[name])) {
       event = normalizeEvent(name)

@@ -52,6 +52,27 @@ const modifierCode: { [key: string]: string } = {
   right: genGuard(`'button' in $event && $event.button !== 2`)
 }
 
+/**
+ * 生成事件处理函数代码
+ * @param {*} events 节点解析出来的事件绑定属性对象
+ * 绑定的原生事件形如 =====>
+ *     {
+          click: {
+            value: 'clickHandler',
+            modifiers: {
+              prevent: true
+            }
+          }
+       }
+
+  绑定的非原生事件形如 =>
+       {
+        click: {
+          value: 'clickHandler($event)'
+        }
+      }
+ * @param {*} isNative
+ */
 export function genHandlers (
   events: ASTElementHandlers,
   isNative: boolean
@@ -59,7 +80,10 @@ export function genHandlers (
   const prefix = isNative ? 'nativeOn:' : 'on:'
   let staticHandlers = ``
   let dynamicHandlers = ``
+
+  // 遍历事件属性对象里面的每一个事件
   for (const name in events) {
+    // 针对每一个事件生成对应的事件代码
     const handlerCode = genHandler(events[name])
     if (events[name] && events[name].dynamic) {
       dynamicHandlers += `${name},${handlerCode},`
@@ -67,7 +91,9 @@ export function genHandlers (
       staticHandlers += `"${name}":${handlerCode},`
     }
   }
+
   staticHandlers = `{${staticHandlers.slice(0, -1)}}`
+
   if (dynamicHandlers) {
     return prefix + `_d(${staticHandlers},[${dynamicHandlers.slice(0, -1)}])`
   } else {
@@ -93,6 +119,10 @@ function genWeexHandler (params: Array<any>, handlerCode: string) {
     '}'
 }
 
+/**
+ * 针对每个事件处理函数生成代码
+ * @param {*} handler
+ */
 function genHandler (handler: ASTElementHandler | Array<ASTElementHandler>): string {
   if (!handler) {
     return 'function(){}'
@@ -106,6 +136,7 @@ function genHandler (handler: ASTElementHandler | Array<ASTElementHandler>): str
   const isFunctionExpression = fnExpRE.test(handler.value)
   const isFunctionInvocation = simplePathRE.test(handler.value.replace(fnInvokeRE, ''))
 
+  // 对事件修饰符进行处理
   if (!handler.modifiers) {
     if (isMethodPath || isFunctionExpression) {
       return handler.value
@@ -140,13 +171,16 @@ function genHandler (handler: ASTElementHandler | Array<ASTElementHandler>): str
         keys.push(key)
       }
     }
+
     if (keys.length) {
       code += genKeyFilter(keys)
     }
+
     // Make sure modifiers like prevent and stop get executed after key filtering
     if (genModifierCode) {
       code += genModifierCode
     }
+
     const handlerCode = isMethodPath
       ? `return ${handler.value}($event)`
       : isFunctionExpression

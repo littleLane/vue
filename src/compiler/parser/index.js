@@ -488,6 +488,8 @@ export function processElement (
   processSlotContent(element)
   processSlotOutlet(element)
   processComponent(element)
+
+  // 处理 class 和 style
   for (let i = 0; i < transforms.length; i++) {
     element = transforms[i](element, options) || element
   }
@@ -808,17 +810,26 @@ function processComponent (el) {
   }
 }
 
+/**
+ * 对节点的属性进行解析
+ * @param {*} el
+ */
 function processAttrs (el) {
   const list = el.attrsList
   let i, l, name, rawName, value, modifiers, syncGen, isDynamic
   for (i = 0, l = list.length; i < l; i++) {
     name = rawName = list[i].name
     value = list[i].value
+
+    // dirRE ==> /^v-|^@|^:/
     if (dirRE.test(name)) {
       // mark element as dynamic
       el.hasBindings = true
+
       // modifiers
+      // 解析出修饰符
       modifiers = parseModifiers(name.replace(dirRE, ''))
+
       // support .foo shorthand syntax for the .prop modifier
       if (process.env.VBIND_PROP_SHORTHAND && propBindRE.test(name)) {
         (modifiers || (modifiers = {})).prop = true
@@ -826,6 +837,8 @@ function processAttrs (el) {
       } else if (modifiers) {
         name = name.replace(modifierRE, '')
       }
+
+      // bindRE =====> /^:|^\.|^v-bind:/
       if (bindRE.test(name)) { // v-bind
         name = name.replace(bindRE, '')
         value = parseFilters(value)
@@ -849,6 +862,8 @@ function processAttrs (el) {
           if (modifiers.camel && !isDynamic) {
             name = camelize(name)
           }
+
+          // 通过 addHandler 绑定事件指令
           if (modifiers.sync) {
             syncGen = genAssignmentCode(value, `$event`)
             if (!isDynamic) {
@@ -957,6 +972,7 @@ function checkInFor (el: ASTElement): boolean {
 }
 
 function parseModifiers (name: string): Object | void {
+  // modifierRE ====> /\.[^.\]]+(?=[^\]]*$)/g
   const match = name.match(modifierRE)
   if (match) {
     const ret = {}

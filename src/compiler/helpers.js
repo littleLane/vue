@@ -66,6 +66,17 @@ function prependModifierMarker (symbol: string, name: string, dynamic?: boolean)
     : symbol + name // mark the event as captured
 }
 
+/**
+ * 为节点绑定事件
+ * @param {*} el
+ * @param {*} name
+ * @param {*} value
+ * @param {*} modifiers
+ * @param {*} important
+ * @param {*} warn
+ * @param {*} range
+ * @param {*} dynamic
+ */
 export function addHandler (
   el: ASTElement,
   name: string,
@@ -76,6 +87,7 @@ export function addHandler (
   range?: Range,
   dynamic?: boolean
 ) {
+  // =========   根据 modifier 修饰符对事件名 name 做处理 ===========
   modifiers = modifiers || emptyObject
   // warn prevent and passive modifier
   /* istanbul ignore if */
@@ -93,6 +105,7 @@ export function addHandler (
   // normalize click.right and click.middle since they don't actually fire
   // this is technically browser-specific, but at least for now browsers are
   // the only target envs that have right/middle clicks.
+  // click.right
   if (modifiers.right) {
     if (dynamic) {
       name = `(${name})==='click'?'contextmenu':(${name})`
@@ -101,6 +114,7 @@ export function addHandler (
       delete modifiers.right
     }
   } else if (modifiers.middle) {
+    // click.middle
     if (dynamic) {
       name = `(${name})==='click'?'mouseup':(${name})`
     } else if (name === 'click') {
@@ -109,21 +123,29 @@ export function addHandler (
   }
 
   // check capture modifier
+  // click.capture
   if (modifiers.capture) {
     delete modifiers.capture
     name = prependModifierMarker('!', name, dynamic)
   }
+
+  // click.once
   if (modifiers.once) {
     delete modifiers.once
     name = prependModifierMarker('~', name, dynamic)
   }
+
   /* istanbul ignore if */
+  // click.passive
   if (modifiers.passive) {
     delete modifiers.passive
     name = prependModifierMarker('&', name, dynamic)
   }
 
+  // ======== 根据 modifier.native 判断是纯原生事件还是普通事件 ========
   let events
+
+  // click.native
   if (modifiers.native) {
     delete modifiers.native
     events = el.nativeEvents || (el.nativeEvents = {})
@@ -136,7 +158,9 @@ export function addHandler (
     newHandler.modifiers = modifiers
   }
 
+  // ======= 按照 name 对事件做归类，并把回调函数的字符串保留到对应的事件中 ======
   const handlers = events[name]
+
   /* istanbul ignore if */
   if (Array.isArray(handlers)) {
     important ? handlers.unshift(newHandler) : handlers.push(newHandler)

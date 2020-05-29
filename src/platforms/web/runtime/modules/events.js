@@ -102,6 +102,11 @@ function remove (
   )
 }
 
+/**
+ * 更新 DOM 绑定事件
+ * @param {*} oldVnode
+ * @param {*} vnode
+ */
 function updateDOMListeners (oldVnode: VNodeWithData, vnode: VNodeWithData) {
   if (isUndef(oldVnode.data.on) && isUndef(vnode.data.on)) {
     return
@@ -109,7 +114,11 @@ function updateDOMListeners (oldVnode: VNodeWithData, vnode: VNodeWithData) {
   const on = vnode.data.on || {}
   const oldOn = oldVnode.data.on || {}
   target = vnode.elm
+
+  // 对 v-model 做处理
   normalizeEvents(on)
+
+  // reference: core/vdom/helpers/index
   updateListeners(on, oldOn, add, remove, createOnceHandler, vnode.context)
   target = undefined
 }
