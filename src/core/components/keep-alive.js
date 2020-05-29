@@ -9,6 +9,14 @@ function getComponentName (opts: ?VNodeComponentOptions): ?string {
   return opts && (opts.Ctor.options.name || opts.tag)
 }
 
+/**
+ * 1、数组就用 indexOf
+ * 2、字符串就用逗号拆分，然后 indexOf
+ * 3、正则就直接 test
+ * 4、否则就直接返回 false
+ * @param {*} pattern
+ * @param {*} name
+ */
 function matches (pattern: string | RegExp | Array<string>, name: string): boolean {
   if (Array.isArray(pattern)) {
     return pattern.indexOf(name) > -1
@@ -21,8 +29,10 @@ function matches (pattern: string | RegExp | Array<string>, name: string): boole
   return false
 }
 
+// 根据 filter 返回 true 或 false，对指定的 keepAlive 中缓存的组件进行保留或卸载
 function pruneCache (keepAliveInstance: any, filter: Function) {
   const { cache, keys, _vnode } = keepAliveInstance
+
   for (const key in cache) {
     const cachedNode: ?VNode = cache[key]
     if (cachedNode) {
@@ -34,6 +44,13 @@ function pruneCache (keepAliveInstance: any, filter: Function) {
   }
 }
 
+/**
+ * 移除指定 key 的组件实例缓存
+ * @param {*} cache
+ * @param {*} key
+ * @param {*} keys
+ * @param {*} current
+ */
 function pruneCacheEntry (
   cache: VNodeCache,
   key: string,
@@ -52,6 +69,9 @@ const patternTypes: Array<Function> = [String, RegExp, Array]
 
 export default {
   name: 'keep-alive',
+
+  // 标识在建立父子组件关系时会被忽略
+  // reference: src/core/instance/lifecycle.js
   abstract: true,
 
   props: {
@@ -66,6 +86,7 @@ export default {
   },
 
   destroyed () {
+    // 移除所有缓存的组件实例
     for (const key in this.cache) {
       pruneCacheEntry(this.cache, key, this.keys)
     }
@@ -75,12 +96,14 @@ export default {
     this.$watch('include', val => {
       pruneCache(this, name => matches(val, name))
     })
+
     this.$watch('exclude', val => {
       pruneCache(this, name => !matches(val, name))
     })
   },
 
   render () {
+    // 只处理第一个子元素或子组件
     const slot = this.$slots.default
     const vnode: VNode = getFirstComponentChild(slot)
     const componentOptions: ?VNodeComponentOptions = vnode && vnode.componentOptions
@@ -88,6 +111,8 @@ export default {
       // check pattern
       const name: ?string = getComponentName(componentOptions)
       const { include, exclude } = this
+
+      // 不匹配 include，或者匹配了 exclude，就直接返回，不走缓存处理
       if (
         // not included
         (include && (!name || !matches(include, name))) ||
@@ -97,20 +122,28 @@ export default {
         return vnode
       }
 
+      // 走缓存处理逻辑
       const { cache, keys } = this
       const key: ?string = vnode.key == null
         // same constructor may get registered as different local components
         // so cid alone is not enough (#3269)
         ? componentOptions.Ctor.cid + (componentOptions.tag ? `::${componentOptions.tag}` : '')
         : vnode.key
+
+      // 命中缓存
       if (cache[key]) {
         vnode.componentInstance = cache[key].componentInstance
+
         // make current key freshest
+        // 将匹配的 key 移到最前面
         remove(keys, key)
         keys.push(key)
       } else {
+        // 没有命中缓存，就存入缓存
         cache[key] = vnode
         keys.push(key)
+
+        // 达到最大限度就移除排在最开始的，也就是最近最久没使用的
         // prune oldest entry
         if (this.max && keys.length > parseInt(this.max)) {
           pruneCacheEntry(cache, keys[0], keys, this._vnode)
