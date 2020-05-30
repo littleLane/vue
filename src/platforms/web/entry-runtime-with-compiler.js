@@ -117,6 +117,7 @@ function getOuterHTML (el: Element): string {
   }
 }
 
+// 将一个模板字符串编译成 render 函数
 Vue.compile = compileToFunctions
 
 export default Vue

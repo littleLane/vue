@@ -6,12 +6,18 @@ import { isPlainObject, validateComponentName } from '../util/index'
 export function initAssetRegisters (Vue: GlobalAPI) {
   /**
    * Create asset registration methods.
+   * reference: src/shared/constants
    */
   ASSET_TYPES.forEach(type => {
     Vue[type] = function (
       id: string,
       definition: Function | Object
     ): Function | Object | void {
+      // 通过
+      //    Vue.directive('my-directive')
+      //    Vue.component('my-component')
+      //    Vue.filter('my-filter')
+      // 的形式获取指定的 directive、component、filter
       if (!definition) {
         return this.options[type + 's'][id]
       } else {

@@ -50,6 +50,9 @@ export function initGlobalAPI (Vue: GlobalAPI) {
   Vue.nextTick = nextTick
 
   // 2.6 explicit observable API
+  // 让一个对象可响应。Vue 内部会用它来处理 data 函数返回的对象，
+  // 实际调用 observe
+  // reference: src/core/observer/index
   Vue.observable = <T>(obj: T): T => {
     observe(obj)
     return obj
