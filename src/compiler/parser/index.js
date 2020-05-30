@@ -228,7 +228,7 @@ export function parse (
     canBeLeftOpenTag: options.canBeLeftOpenTag,
     shouldDecodeNewlines: options.shouldDecodeNewlines,
     shouldDecodeNewlinesForHref: options.shouldDecodeNewlinesForHref,
-    shouldKeepComment: options.comments,
+    shouldKeepComment: options.comments,  // 是否保留注释，默认 false
     outputSourceRange: options.outputSourceRange,
 
     // 处理开始标签

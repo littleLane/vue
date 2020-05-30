@@ -328,6 +328,10 @@ function hasAncestorData (node: VNode) {
   return isDef(parentNode) && (isDef(parentNode.data) || hasAncestorData(parentNode))
 }
 
+/**
+ * 处理 v-show 指令
+ * @param {*} node
+ */
 function getVShowDirectiveInfo (node: VNode): ?VNodeDirective {
   let dir: VNodeDirective
   let tmp

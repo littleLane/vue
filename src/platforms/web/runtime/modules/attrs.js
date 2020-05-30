@@ -20,6 +20,8 @@ import {
 
 function updateAttrs (oldVnode: VNodeWithData, vnode: VNodeWithData) {
   const opts = vnode.componentOptions
+
+  // inheritAttrs 为 false 表示不被认作 props 的 attribute 绑定不会“回退”且作为普通的 HTML attribute 应用在子组件的根元素上
   if (isDef(opts) && opts.Ctor.options.inheritAttrs === false) {
     return
   }

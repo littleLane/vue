@@ -110,6 +110,8 @@ export function lifecycleMixin (Vue: Class<Component>) {
     // updated in a parent's updated hook.
   }
 
+  // 强制刷新，调用 vm._watcher.update
+  // 注意它仅仅影响实例本身和插入插槽内容的子组件，而不是所有子组
   Vue.prototype.$forceUpdate = function () {
     const vm: Component = this
     if (vm._watcher) {
@@ -118,6 +120,7 @@ export function lifecycleMixin (Vue: Class<Component>) {
   }
 
   // 组件销毁的方法
+  // 完全销毁一个实例。清理它与其它实例的连接，解绑它的全部指令及事件监听器
   Vue.prototype.$destroy = function () {
     const vm: Component = this
 

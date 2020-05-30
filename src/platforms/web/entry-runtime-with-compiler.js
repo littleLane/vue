@@ -18,6 +18,10 @@ const idToTemplate = cached(id => {
 // reference: src/platforms/web/runtime/index.js
 const mount = Vue.prototype.$mount
 
+// 1、如果 Vue 实例在实例化时没有收到 el 选项，则它处于“未挂载”状态，没有关联的 DOM 元素。可以使用 vm.$mount() 手动地挂载一个未挂载的实例
+// 2、如果没有提供 elementOrSelector 参数，模板将被渲染为文档之外的的元素，并且必须使用原生 DOM API 把它插入文档中
+// reference: https://cn.vuejs.org/v2/api/#vm-mount
+
 // 重新定义 Vue.prototype.$mount
 // 参数 el => 挂载节点
 // hydrating => 是否为服务端渲染

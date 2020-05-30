@@ -104,6 +104,8 @@ export function renderMixin (Vue: Class<Component>) {
       // return error render result,
       // or previous vnode to prevent render error causing blank component
       /* istanbul ignore else */
+      // renderError 只在开发环境有效
+      // 当 render 函数执行出现异常时提供另外一种渲染输出
       if (process.env.NODE_ENV !== 'production' && vm.$options.renderError) {
         try {
           vnode = vm.$options.renderError.call(vm._renderProxy, vm.$createElement, e)

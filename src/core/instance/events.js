@@ -85,13 +85,19 @@ export function eventsMixin (Vue: Class<Component>) {
     return vm
   }
 
+  // 移除自定义事件监听器
+  //    1、如果没有提供参数，则移除所有的事件监听器
+  //    2、如果只提供了事件，则移除该事件所有的监听器
+  //    3、如果同时提供了事件与回调，则只移除这个回调的监听器
   Vue.prototype.$off = function (event?: string | Array<string>, fn?: Function): Component {
     const vm: Component = this
+
     // all
     if (!arguments.length) {
       vm._events = Object.create(null)
       return vm
     }
+
     // array of events
     if (Array.isArray(event)) {
       for (let i = 0, l = event.length; i < l; i++) {
@@ -99,6 +105,7 @@ export function eventsMixin (Vue: Class<Component>) {
       }
       return vm
     }
+
     // specific event
     const cbs = vm._events[event]
     if (!cbs) {
@@ -108,6 +115,7 @@ export function eventsMixin (Vue: Class<Component>) {
       vm._events[event] = null
       return vm
     }
+
     // specific handler
     let cb
     let i = cbs.length

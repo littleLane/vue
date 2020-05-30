@@ -434,6 +434,7 @@ export function stateMixin (Vue: Class<Component>) {
   Vue.prototype.$set = set
   Vue.prototype.$delete = del
 
+  // user watcher
   Vue.prototype.$watch = function (
     expOrFn: string | Function,
     cb: any,

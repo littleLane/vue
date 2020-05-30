@@ -70,7 +70,7 @@ export function initMixin (Vue: Class<Component>) {
     // 初始化事件
     initEvents(vm)
 
-    // 初始化渲染
+    // 初始化 createElement 函数和属性代理
     initRender(vm)
 
     // 调用 beforeCreate 生命周期
