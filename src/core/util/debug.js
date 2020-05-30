@@ -18,6 +18,10 @@ if (process.env.NODE_ENV !== 'production') {
   warn = (msg, vm) => {
     const trace = vm ? generateComponentTrace(vm) : ''
 
+    // 可以自定义，形如 =>
+    // Vue.config.warnHandler = function (msg, vm, trace) {
+    //   // `trace` 是组件的继承关系追踪
+    // }
     if (config.warnHandler) {
       config.warnHandler.call(null, msg, vm, trace)
     } else if (hasConsole && (!config.silent)) {

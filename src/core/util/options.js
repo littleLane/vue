@@ -27,6 +27,14 @@ import {
  * value into the final value.
  * 初始值就是空对象 Object.create(null)
  * 用来保存不同 option 的合并策略
+ * 可以自定义  ====>
+ *
+ * toVal => 父实例上该选项的值
+ * fromVal => 子实例上该选项的值
+ * vm => Vue 实例
+ * Vue.config.optionMergeStrategies.myOption = function (toVal, fromVal, vm) {
+ *      // 返回合并后的值
+ * }
  */
 const strats = config.optionMergeStrategies
 

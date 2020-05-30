@@ -54,11 +54,18 @@ export default {
   render (h: Function) {
     const tag: string = this.tag || this.$vnode.data.tag || 'span'
     const map: Object = Object.create(null)
+
+    // 用来存储上一次的子节点
     const prevChildren: Array<VNode> = this.prevChildren = this.children
     const rawChildren: Array<VNode> = this.$slots.default || []
+
+    // 用来存储当前的子节点
     const children: Array<VNode> = this.children = []
     const transitionData: Object = extractTransitionData(this)
 
+    // 遍历 rawChidren，初始化 children
+    // 对 rawChildren 遍历，拿到每个 vnode，然后会判断每个 vnode 是否设置了 key
+    // 然后把 vnode 添加到 children 中，然后把刚刚提取的过渡数据 transitionData 添加的 vnode.data.transition 中
     for (let i = 0; i < rawChildren.length; i++) {
       const c: VNode = rawChildren[i]
       if (c.tag) {
@@ -74,6 +81,7 @@ export default {
       }
     }
 
+    // 处理 prevChildren
     if (prevChildren) {
       const kept: Array<VNode> = []
       const removed: Array<VNode> = []
@@ -95,6 +103,7 @@ export default {
   },
 
   updated () {
+    // 判断子元素是否定义 move 相关样式
     const children: Array<VNode> = this.prevChildren
     const moveClass: string = this.moveClass || ((this.name || 'v') + '-move')
     if (!children.length || !this.hasMove(children[0].elm, moveClass)) {
@@ -103,6 +112,7 @@ export default {
 
     // we divide the work into three loops to avoid mixing DOM reads and writes
     // in each iteration - which helps prevent layout thrashing.
+    // 子节点预处理
     children.forEach(callPendingCbs)
     children.forEach(recordPosition)
     children.forEach(applyTranslation)
@@ -110,8 +120,11 @@ export default {
     // force reflow to put everything in position
     // assign to this to avoid being removed in tree-shaking
     // $flow-disable-line
+    // 遍历子元素实现 move 过渡
+    // 强制触发浏览器重绘
     this._reflow = document.body.offsetHeight
 
+    // 对 children 遍历，先给子节点添加 moveClass
     children.forEach((c: VNode) => {
       if (c.data.moved) {
         const el: any = c.elm
@@ -147,14 +160,21 @@ export default {
       // transition at this very moment, we make a clone of it and remove
       // all other transition classes applied to ensure only the move class
       // is applied.
+      // 首先克隆一个 DOM 节点，然后为了避免影响，移除它的所有其他的过渡 Class
       const clone: HTMLElement = el.cloneNode()
       if (el._transitionClasses) {
         el._transitionClasses.forEach((cls: string) => { removeClass(clone, cls) })
       }
+
+      // 接着添加了 moveClass 样式，设置 display 为 none，添加到组件根节点上
       addClass(clone, moveClass)
       clone.style.display = 'none'
       this.$el.appendChild(clone)
+
+      // 通过 getTransitionInfo 获取它的一些缓动相关的信息
       const info: Object = getTransitionInfo(clone)
+
+      // 从组件根节点上删除这个克隆节点，并通过判断 info.hasTransform 来判断 hasMove
       this.$el.removeChild(clone)
       return (this._hasMove = info.hasTransform)
     }

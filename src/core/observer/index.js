@@ -248,6 +248,7 @@ export function defineReactive (
  * already exist.
  * call reference: src/core/global-api/index.js
  * this.$set(obj, 'name', 'littleLane')
+ * 注意对象不能是 Vue 实例，或者 Vue 实例的根数据对象。
  */
 export function set (target: Array<any> | Object, key: any, val: any): any {
   // target 必须是引用类型
@@ -297,6 +298,7 @@ export function set (target: Array<any> | Object, key: any, val: any): any {
  * Delete a property and trigger change if necessary.
  * call reference: src/core/global-api/index.js
  *    this.$delete(obj, 'name')
+ * 注意对象不能是 Vue 实例，或者 Vue 实例的根数据对象。
  */
 export function del (target: Array<any> | Object, key: any) {
   // target 必须是引用类型
